@@ -1,18 +1,19 @@
 #include <iostream>
-#include <opencv2/core/core.hpp>
+#include <chrono>
 
 #include <opencv2/highgui.hpp>
 
 #include <Dataset.h>
+#include <System.h>
 
 using std::cerr;
 using std::endl;
 using std::cout;
-using std::tie;
+using std::chrono::steady_clock;
 
-void show_frame_temp(cv::Mat& imLeft) {
-    cv::namedWindow("Display Image", CV_WINDOW_AUTOSIZE);//创建窗口
-    cv::imshow("Display Image", imLeft);//显示
+void TEMP_show_frame(cv::Mat& imLeft) {
+    cv::namedWindow("Display Image", CV_WINDOW_AUTOSIZE); // create window
+    cv::imshow("Display Image", imLeft); // show the image
     cv::waitKey(50);
 }
 
@@ -28,17 +29,22 @@ int main(int argc, char **argv) {
 
     const int nImages = KITTI.getImagesNum();
 
+    fast_SVO::System SVO(&KITTI, argv[1], fast_SVO::System::KITTI);
+
     cout << endl << "--------" << endl;
     cout << "Start processing sequence ..."  << endl;
     cout << "Images in the sequence: " << nImages << endl << endl;
 
     // Main loop
-    cv::Mat imLeft, imRight;
     double tframe = 0;
     for (int ni = 0; ni < nImages; ++ni) {
-        tie(imLeft, imRight, tframe) = KITTI.getImages(ni);
-        cout << tframe << endl;
-        show_frame_temp(imLeft);
+        tframe = SVO.UpdateImages(ni); // update the images pair to No. ni
+
+        steady_clock::time_point t1 = steady_clock::now();
+
+        SVO.TrackStereo(ni);
+
+        steady_clock::time_point t2 = steady_clock::now();
     }
     return 0;
 }

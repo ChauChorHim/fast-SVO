@@ -20,6 +20,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 add_library(
     ${PROJECT_NAME} SHARED
     src/Dataset.cc
+    src/System.cc
 )
 
 
