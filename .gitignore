@@ -34,3 +34,5 @@
 /dataset/
 /build/
 /.vscode/
+
+*.swp

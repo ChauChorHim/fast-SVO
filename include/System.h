@@ -4,13 +4,18 @@
 #include <string>
 #include <tuple>
 #include <opencv2/core/core.hpp>
+
 #include <Dataset.h>
+#include <Tracking.h>
 
 using std::string;
 using std::tuple;
 
 namespace fast_SVO
 {
+
+class Tracking;
+
 class System
 {
 public:
@@ -21,14 +26,17 @@ public:
     };
 
 private:
-    const DatasetType datasetType_;
-    const Dataset* pDataset_;
-    cv::Mat curImLeft_; 
-    cv::Mat curImRight_;
-    double curTimestamp_ = 0;
+    const DatasetType mDatasetType_;
+    const Dataset* mpDataset_;
+    cv::Mat mCurImLeft_; 
+    cv::Mat mCurImRight_;
+    double mCurTimestamp_ = 0;
+
+    // Tracker. It receives a frame and computes the associated camera pose.
+    Tracking* mpTracker_;
 
 public:
-    System(const Dataset *pDataset, const string &strSetting, const DatasetType datasetType);
+    System(const Dataset *mpDataset, const string &strSettingFile, const DatasetType mDatasetType);
     
     double UpdateImages(const int ni);
 

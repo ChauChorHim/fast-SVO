@@ -21,6 +21,8 @@ add_library(
     ${PROJECT_NAME} SHARED
     src/Dataset.cc
     src/System.cc
+    src/Tracking.cc
+    src/ORBextractor.cc
 )
 
 

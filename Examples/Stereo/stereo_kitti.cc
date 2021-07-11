@@ -10,6 +10,8 @@ using std::cerr;
 using std::endl;
 using std::cout;
 using std::chrono::steady_clock;
+using std::chrono::duration_cast;
+using std::chrono::duration;
 
 void TEMP_show_frame(cv::Mat& imLeft) {
     cv::namedWindow("Display Image", CV_WINDOW_AUTOSIZE); // create window
@@ -45,6 +47,8 @@ int main(int argc, char **argv) {
         SVO.TrackStereo(ni);
 
         steady_clock::time_point t2 = steady_clock::now();
+
+        double ttrack = duration_cast<duration<double>> (t2 - t1).count();
     }
     return 0;
 }
