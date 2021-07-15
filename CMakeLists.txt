@@ -20,10 +20,10 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 add_library(
     ${PROJECT_NAME} SHARED
-    src/Dataset.cc
-    src/System.cc
-    src/Tracking.cc
-    src/ORBextractor.cc
+    src/Dataset.cpp
+    src/System.cpp
+    src/Tracking.cpp
+    src/ORBextractor.cpp
 )
 
 
@@ -34,7 +34,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo)
 
 add_executable(
     stereo_kitti
-    Examples/Stereo/stereo_kitti.cc
+    Examples/Stereo/stereo_kitti.cpp
 )
 target_link_libraries(
     stereo_kitti

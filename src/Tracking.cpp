@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "Tracking.h"
-#include "System.h"
+#include "Tracking.hpp"
 
+#include <opencv2/imgcodecs.hpp>
 namespace fast_SVO
 {
 

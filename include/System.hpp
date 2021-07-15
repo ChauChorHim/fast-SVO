@@ -1,21 +1,11 @@
-/*
- * @Author: your name
- * @Date: 2021-07-10 16:26:18
- * @LastEditTime: 2021-07-15 10:46:49
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: /fast-SVO/include/System.h
- */
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
 #include <string>
 #include <tuple>
 
-#include "Dataset.h"
-#include "Tracking.h"
-
-#include <opencv2/imgcodecs.hpp>
+#include "Dataset.hpp"
+#include "Tracking.hpp"
 
 namespace fast_SVO
 {

@@ -1,18 +1,9 @@
-/*
- * @Author: your name
- * @Date: 2021-07-11 20:57:55
- * @LastEditTime: 2021-07-15 10:46:03
- * @LastEditors: your name
- * @Description: In User Settings Edit
- * @FilePath: /fast-SVO/include/Tracking.h
- */
 #ifndef TRACKING_H
 #define TRACKING_H
 
 #include <string>
 
-#include "ORBextractor.h"
-#include "System.h"
+#include "ORBextractor.hpp"
 
 #include <opencv2/core/mat.hpp>
 

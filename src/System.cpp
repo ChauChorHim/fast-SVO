@@ -1,6 +1,6 @@
 #include <iostream> // cerr
 
-#include "System.h"
+#include "System.hpp"
 
 #include <opencv2/imgcodecs.hpp>
 
@@ -21,8 +21,8 @@ System::System(const Dataset *dataset, const std::string &strSettingFile, const 
 
 /**
  * @description: This function update the left and right image for the System by reading the corresponding images path
- * @param {const int} ni: No. of images pair
- * @return {*}
+ * @param {const int} ni (No. of images pair)
+ * @return {double} curTimestamp_ (current time stamp)
  */
 double System::updateImages(const int ni) {
     curTimestamp_ = dataset_->vTimestamps_[ni];

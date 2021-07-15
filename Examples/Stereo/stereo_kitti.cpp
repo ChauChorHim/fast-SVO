@@ -1,8 +1,8 @@
 #include <iostream>
 #include <chrono>
 
-#include "Dataset.h"
-#include "System.h"
+#include "Dataset.hpp"
+#include "System.hpp"
 
 #include <opencv2/highgui.hpp>
 
