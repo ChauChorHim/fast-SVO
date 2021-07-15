@@ -3,12 +3,11 @@
 #include <iomanip> // setfill, stew
 #include "Dataset.h"
 
-using std::endl;
 
 namespace fast_SVO
 {
 
-Dataset::Dataset(const string &strPathToSequence) {
+Dataset::Dataset(const std::string &strPathToSequence) {
     Dataset::loadImages(strPathToSequence);
 }
 
@@ -16,12 +15,12 @@ int Dataset::getImagesNum() {
     return vstrImageLeft_.size();
 }
 
-void Dataset::loadImages(const string &strPathToSequence) {
+void Dataset::loadImages(const std::string &strPathToSequence) {
     std::ifstream fTimes;
-    string strPathTimeFile = strPathToSequence + "/times.txt";
+    std::string strPathTimeFile = strPathToSequence + "/times.txt";
     fTimes.open(strPathTimeFile.c_str());
     while(!fTimes.eof()) {
-        string s;
+        std::string s;
         getline(fTimes, s);
         if(!s.empty()) {
             std::stringstream ss;
@@ -31,8 +30,8 @@ void Dataset::loadImages(const string &strPathToSequence) {
             vTimestamps_.push_back(t);
         }
     }
-    string strPrefixLeft = strPathToSequence + "/image_0/";
-    string strPrefixRight = strPathToSequence + "/image_1/";
+    std::string strPrefixLeft = strPathToSequence + "/image_0/";
+    std::string strPrefixRight = strPathToSequence + "/image_1/";
 
     const int nTimes = vTimestamps_.size();
     vstrImageLeft_.resize(nTimes);

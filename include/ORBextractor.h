@@ -6,13 +6,13 @@ namespace fast_SVO
 
 class ORBextractor {
 public:
-    ORBextractor(int nfeatures, float scaleFactor, int nlevels,
+    ORBextractor(int features, float scaleFactor, int levels,
                  int iniThFAST, int minThFAST);
 
 private:
-    int nfeatures_;
+    int features_;
     double scaleFactor_;
-    int nlevels_;
+    int levels_;
     int iniThFAST_;
     int minThFAST_;
 };

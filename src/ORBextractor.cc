@@ -2,8 +2,8 @@
 
 namespace fast_SVO 
 {
-ORBextractor::ORBextractor(int nfeatures, float scaleFactor, int nlevels, int iniThFAST, int minThFAST) : 
-    nfeatures_(nfeatures), scaleFactor_(scaleFactor), nlevels_(nlevels), iniThFAST_(iniThFAST), minThFAST_(minThFAST) {
+ORBextractor::ORBextractor(int features, float scaleFactor, int levels, int iniThFAST, int minThFAST) : 
+    features_(features), scaleFactor_(scaleFactor), levels_(levels), iniThFAST_(iniThFAST), minThFAST_(minThFAST) {
 
 }
 }

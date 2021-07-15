@@ -1,15 +1,21 @@
+/*
+ * @Author: your name
+ * @Date: 2021-07-10 16:26:18
+ * @LastEditTime: 2021-07-15 10:46:49
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: /fast-SVO/include/System.h
+ */
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
 #include <string>
 #include <tuple>
-#include <opencv2/core/core.hpp>
 
-#include <Dataset.h>
-#include <Tracking.h>
+#include "Dataset.h"
+#include "Tracking.h"
 
-using std::string;
-using std::tuple;
+#include <opencv2/imgcodecs.hpp>
 
 namespace fast_SVO
 {
@@ -26,23 +32,23 @@ public:
     };
 
 private:
-    const DatasetType mDatasetType_;
-    const Dataset* mpDataset_;
-    cv::Mat mCurImLeft_; 
-    cv::Mat mCurImRight_;
-    double mCurTimestamp_ = 0;
+    const DatasetType datasetType_;
+    const Dataset* dataset_;
+    cv::Mat curImLeft_; 
+    cv::Mat curImRight_;
+    double curTimestamp_ = 0;
 
     // Tracker. It receives a frame and computes the associated camera pose.
-    Tracking* mpTracker_;
+    Tracking* tracker_;
 
 public:
-    System(const Dataset *mpDataset, const string &strSettingFile, const DatasetType mDatasetType);
+    System(const Dataset *dataset, const std::string &strSettingFile, const DatasetType datasetType);
     
-    double UpdateImages(const int ni);
+    double updateImages(const int ni);
 
-    cv::Mat TrackStereo(const int ni);
+    cv::Mat trackStereo(const int ni);
 
-    void SaveTrajecotry(const string &filename);
+    void saveTrajecotry(const std::string &filename);
 };
 
 
