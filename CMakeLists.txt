@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 project(fast_SVO)
 
+SET(CMAKE_BUILD_TYPE "Debug")
+SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb")
+SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 
 find_package(OpenCV 4.0 QUIET)
 if(NOT OpenCV_FOUND)
@@ -23,7 +26,6 @@ add_library(
     src/Dataset.cpp
     src/System.cpp
     src/Tracking.cpp
-    src/ORBextractor.cpp
 )
 
 

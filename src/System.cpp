@@ -1,3 +1,9 @@
+/*
+ * 
+ */
+/*
+ * 
+ */
 #include <iostream> // cerr
 
 #include "System.hpp"
@@ -24,19 +30,21 @@ System::System(const Dataset *dataset, const std::string &strSettingFile, const 
  * @param {const int} ni (No. of images pair)
  * @return {double} curTimestamp_ (current time stamp)
  */
-double System::updateImages(const int ni) {
-    curTimestamp_ = dataset_->vTimestamps_[ni];
-    curImLeft_ = cv::imread(dataset_->vstrImageLeft_[ni], cv::IMREAD_UNCHANGED);
-    curImRight_ = cv::imread(dataset_->vstrImageRight_[ni], cv::IMREAD_UNCHANGED);
+double System::updateImages(const int i) {
+    curTimestamp_ = dataset_->vTimestamps_[i];
+    curImLeft_ = cv::imread(dataset_->vstrImageLeft_[i], cv::IMREAD_UNCHANGED);
+    curImRight_ = cv::imread(dataset_->vstrImageRight_[i], cv::IMREAD_UNCHANGED);
     if(curImLeft_.empty()) {
         std::cerr << std::endl << "Failed to load image at: " 
-             << std::string(dataset_->vstrImageLeft_[ni]) << std::endl; 
+             << std::string(dataset_->vstrImageLeft_[i]) << std::endl; 
     }
     return curTimestamp_; // used for checking the current time stamp
 }
 
-cv::Mat System::trackStereo(const int ni) {
-
+void System::trackStereo() {
+    tracker_->updateImagesFeatures(curImLeft_, curImRight_, curTimestamp_);
+    tracker_->matchStereoFeaturesNaive();
+    tracker_->showMatches(curImLeft_, curImRight_);
 }
 
 }

@@ -6,7 +6,7 @@
 
 #include <opencv2/highgui.hpp>
 
-void TEMP_show_frame(cv::Mat& imLeft) {
+void showFrameNaive(cv::Mat& imLeft) {
     cv::namedWindow("Display Image", cv::WINDOW_AUTOSIZE); // create window
     cv::imshow("Display Image", imLeft); // show the image
     cv::waitKey(50);
@@ -22,26 +22,26 @@ int main(int argc, char **argv) {
     // The constructor use private LoadImages
     fast_SVO::Dataset KITTI {std::string(argv[2])};
 
-    const int nImages = KITTI.getImagesNum();
+    const int imagesNum = KITTI.getImagesNum();
 
     fast_SVO::System SVO(&KITTI, argv[1], fast_SVO::System::KITTI);
 
     std::cout << std::endl << "--------" << std::endl;
     std::cout << "Start processing sequence ..."  << std::endl;
-    std::cout << "Images in the sequence: " << nImages << std::endl << std::endl;
+    std::cout << "Images in the sequence: " << imagesNum << std::endl << std::endl;
 
     // Main loop
     double tframe = 0;
-    for (int ni = 0; ni < nImages; ++ni) {
-        tframe = SVO.updateImages(ni); // update the images pair to No. ni
+    for (int i = 0; i < imagesNum; ++i) {
+        tframe = SVO.updateImages(i); // update the images pair to No. ni
 
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 
-        SVO.trackStereo(ni);
+        SVO.trackStereo();
 
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
-
         double ttrack = std::chrono::duration_cast<std::chrono::duration<double>> (t2 - t1).count();
+        
     }
     return 0;
 }

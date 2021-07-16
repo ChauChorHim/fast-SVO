@@ -1,11 +1,19 @@
+/*
+ * 
+ */
+/*
+ * 
+ */
 #ifndef TRACKING_H
 #define TRACKING_H
 
 #include <string>
 
-#include "ORBextractor.hpp"
-
 #include <opencv2/core/mat.hpp>
+#include <opencv2/core/cvstd.hpp>
+#include <opencv2/features2d.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
 
 namespace fast_SVO
 {
@@ -17,9 +25,11 @@ class Tracking {
 public:
     Tracking(System* system, const std::string &strSettingFile);
 
-    // Preprocess the input and call Track(). 
-    // Extract features and performs stereo matching.
-    cv::Mat grabImagesStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp);
+    void updateImagesFeatures(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp);
+
+    void matchStereoFeaturesNaive();
+
+    void showMatches(const cv::Mat &imRectLeft, const cv::Mat &imRectRight);
 
 private:
 
@@ -32,10 +42,24 @@ private:
     bool rgbOrder_;
 
     // ORB features extractor
-    ORBextractor* ORBextractorLeft_, *ORBextractorRight_;
+    cv::Ptr<cv::ORB> ORBextractorLeft_, ORBextractorRight_;
+
+    // features keypoints
+    std::vector<cv::KeyPoint> leftKeypoints_, rightKeypoints_;
+
+    // features descriptors
+    cv::Mat leftDescriptors_, rightDescriptors_;
+
+    // features matcher
+    cv::Ptr<cv::DescriptorMatcher> matcher_;
+
+    // features matches
+    std::vector<cv::DMatch> matches_;
 
     // System pointer
     System* system_;
+
+
 };
 }
 

@@ -1,13 +1,16 @@
+/*
+ * 
+ */
 #include <iostream>
 
 #include "Tracking.hpp"
 
-#include <opencv2/imgcodecs.hpp>
+
+
 namespace fast_SVO
 {
 
-Tracking::Tracking(System* system, const std::string &strSettingFile) :
-    system_(system) {
+Tracking::Tracking(System* system, const std::string &strSettingFile) : system_(system) {
     cv::FileStorage fSettings(strSettingFile, cv::FileStorage::READ);
     float fx = fSettings["Camera.fx"];
     float fy = fSettings["Camera.fy"];
@@ -62,24 +65,37 @@ Tracking::Tracking(System* system, const std::string &strSettingFile) :
     // Load ORB parameters
 
     int nFeatures = fSettings["ORBextractor.nFeatures"];
-    float fScaleFactor = fSettings["ORBextractor.scaleFactor"];
+    float scaleFactor = fSettings["ORBextractor.scaleFactor"];
     int nLevels = fSettings["ORBextractor.nLevels"];
-    int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
-    int fMinThFAST = fSettings["ORBextractor.minThFAST"];
 
-    ORBextractorLeft_ = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
-    ORBextractorRight_ = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
+    ORBextractorLeft_ = cv::ORB::create(nFeatures,scaleFactor,nLevels);
+    ORBextractorRight_ = cv::ORB::create(nFeatures,scaleFactor,nLevels);
 
     std::cout << std::endl  << "ORB Extractor Parameters: " << std::endl;
     std::cout << "- Number of Features: " << nFeatures << std::endl;
     std::cout << "- Scale Levels: " << nLevels << std::endl;
-    std::cout << "- Scale Factor: " << fScaleFactor << std::endl;
-    std::cout << "- Initial Fast Threshold: " << fIniThFAST << std::endl;
-    std::cout << "- Minimum Fast Threshold: " << fMinThFAST << std::endl;
+    std::cout << "- Scale Factor: " << scaleFactor << std::endl;
+
+    matcher_ = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE_HAMMING);
 }
 
-cv::Mat grabImagesStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp) {
 
+void Tracking::updateImagesFeatures(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp) {
+    ORBextractorLeft_->detectAndCompute(imRectLeft, cv::noArray(), leftKeypoints_, leftDescriptors_);    
+    ORBextractorRight_->detectAndCompute(imRectRight, cv::noArray(), rightKeypoints_, rightDescriptors_);    
+}
+
+void Tracking::matchStereoFeaturesNaive() {
+    matcher_->match(leftDescriptors_, rightDescriptors_, matches_);
+}
+
+void Tracking::showMatches(const cv::Mat &imRectLeft, const cv::Mat &imRectRight) {
+    cv::Mat imMatches;
+    cv::drawMatches(imRectLeft, leftKeypoints_, imRectRight, rightKeypoints_, matches_, imMatches);
+
+    cv::namedWindow("Display Image", cv::WINDOW_AUTOSIZE); // create window
+    cv::imshow("Display Image", imMatches); // show the image
+    cv::waitKey(50);
 }
 
 }
