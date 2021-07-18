@@ -1,14 +1,7 @@
-/*
- * 
- */
-/*
- * 
- */
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
 #include <string>
-#include <tuple>
 
 #include "Dataset.hpp"
 #include "Tracking.hpp"
@@ -32,8 +25,7 @@ private:
     const DatasetType datasetType_;
     const Dataset* dataset_;
 
-    cv::Mat curImLeft_; 
-    cv::Mat curImRight_;
+    cv::Mat curImLeft_, curImRight_, preImLeft_;
     double curTimestamp_ = 0;
 
     // Tracker. It receives a frame and computes the associated camera pose.

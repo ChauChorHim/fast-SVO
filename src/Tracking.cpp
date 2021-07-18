@@ -14,6 +14,7 @@ namespace fast_SVO
 {
 
 Tracking::Tracking(System* system, const std::string &strSettingFile) : system_(system) {
+    state = NOT_INITIALIZED;
     cv::FileStorage fSettings(strSettingFile, cv::FileStorage::READ);
     float fx = fSettings["Camera.fx"];
     float fy = fSettings["Camera.fy"];
@@ -27,17 +28,14 @@ Tracking::Tracking(System* system, const std::string &strSettingFile) : system_(
     K.at<float>(1, 2) = cy;
     K.copyTo(K_);
 
-    cv::Mat P = cv::Mat::zeros(cv::Size_<float>(3, 4), CV_32F);
-    P.at<float>(0, 0) = fx;
-    P.at<float>(0, 2) = cx;
-    P.at<float>(1, 1) = fy;
-    P.at<float>(1, 2) = cy;
-    P.at<float>(2, 2) = 1.;
-    P.copyTo(P1_);
+    cv::Matx34d P = cv::Matx34d(K.at<float>(0, 0), K.at<float>(0, 1), K.at<float>(0, 2), 0,
+                                K.at<float>(1, 0), K.at<float>(1, 1), K.at<float>(1, 2), 0,
+                                K.at<float>(2, 0), K.at<float>(2, 1), K.at<float>(2, 2), 0);
+    P1_ = P;
 
     baseline_ = fSettings["Camera.bf"];
-    P.at<float>(0, 3) = -baseline_;
-    P.copyTo(P2_);
+    P(0, 3) = -baseline_;
+    P2_ = P;
 
     cv::Mat distCoef(4, 1, CV_32F);
     distCoef.at<float>(0) = fSettings["Camera.k1"];
@@ -103,24 +101,29 @@ void Tracking::matchStereoFeaturesNaive() {
     //matcher_->match(leftDescriptors_, rightDescriptors_, matches_);
     matcher_->knnMatch(leftDescriptors_, rightDescriptors_, knnMatches_, 2);
 
+    //-- Clear leftKeypointsCoor_, rightKeypointsCoor_
+    leftKeypointsCoor_.clear();
+    rightKeypointsCoor_.clear();
+
     //-- Filter matches using the Lowe's ratio test
     const float ratio_thresh = 0.8f;
-    std::vector<cv::KeyPoint> goodLeftKeypoints_, goodRightKeypoints_;
     size_t j = 0;
     for (size_t i = 0; i < knnMatches_.size(); i++)
     {
         if (knnMatches_[i][0].distance < ratio_thresh * knnMatches_[i][1].distance) {
             goodMatches_.push_back(knnMatches_[i][0]);
-            leftKeypoints_[j] = leftKeypoints_[i];
-            rightKeypoints_[j] = rightKeypoints_[i];
+            leftKeypointsCoor_.push_back(leftKeypoints_[i].pt);
+            rightKeypointsCoor_.push_back(rightKeypoints_[i].pt);
             j++;
         }
     }
+    //std::cout << "leftKeypointsCoor_.size() = " << leftKeypointsCoor_.size() << std::endl;
 
     //-- Triangulate 3D points
-    cv::Mat pnts3D(4,leftKeypoints_.size(),CV_64F);
-    cv::triangulatePoints(P1_, P2_, leftKeypoints_, rightKeypoints_, pnts3D);
-    pnts3D.copyTo(points3d_);
+    cv::Mat pnts3D(4, leftKeypoints_.size(), CV_64F);
+    cv::triangulatePoints(P1_, P2_, leftKeypointsCoor_, rightKeypointsCoor_, pnts3D);
+    points3d_ = std::move(pnts3D);
+    //std::cout << "points3d_.size() = " << points3d_.size() << std::endl;
 }
 
 void Tracking::showMatches(const cv::Mat &imRectLeft, const cv::Mat &imRectRight) {
@@ -130,6 +133,26 @@ void Tracking::showMatches(const cv::Mat &imRectLeft, const cv::Mat &imRectRight
     cv::imshow("Display Image", imMatches); // show the image
     cv::waitKey(50);
     goodMatches_.clear();
+}
+
+void Tracking::matchFeaturesNaive() {
+    std::vector<std::vector<cv::DMatch>> knnMatches_;
+    //matcher_->match(leftDescriptors_, rightDescriptors_, matches_);
+    matcher_->knnMatch(leftDescriptors_, preLeftDescriptors_, knnMatches_, 2);
+
+    //-- Filter matches using the Lowe's ratio test
+    const float ratio_thresh = 0.8f;
+    size_t j = 0;
+    for (size_t i = 0; i < knnMatches_.size(); i++)
+    {
+        if (knnMatches_[i][0].distance < ratio_thresh * knnMatches_[i][1].distance) {
+            goodMatches_.push_back(knnMatches_[i][0]);
+            leftKeypoints_[j] = leftKeypoints_[i];
+            preLeftKeypoints_[j] = preLeftKeypoints_[i];
+
+            j++;
+        }
+    }
 }
 
 }
