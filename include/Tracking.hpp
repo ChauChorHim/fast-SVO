@@ -38,8 +38,15 @@ private:
     cv::Mat distCoef_;
     float baseline_;
 
+    // Projection matrix
+    cv::Mat P1_;
+    cv::Mat P2_;
+
     // Color order (true RGB, false BGR, ignored if grayscale)
     bool rgbOrder_;
+
+    // System pointer
+    System* system_;
 
     // ORB features extractor
     cv::Ptr<cv::ORB> ORBextractorLeft_, ORBextractorRight_;
@@ -54,12 +61,10 @@ private:
     cv::Ptr<cv::DescriptorMatcher> matcher_;
 
     // features matches
-    std::vector<cv::DMatch> matches_;
+    std::vector<cv::DMatch> goodMatches_;
 
-    // System pointer
-    System* system_;
-
-
+    // triangulated points
+    cv::Mat points3d_;
 };
 }
 

@@ -44,7 +44,7 @@ double System::updateImages(const int i) {
 void System::trackStereo() {
     tracker_->updateImagesFeatures(curImLeft_, curImRight_, curTimestamp_);
     tracker_->matchStereoFeaturesNaive();
-    tracker_->showMatches(curImLeft_, curImRight_);
+    //tracker_->showMatches(curImLeft_, curImRight_);
 }
 
 }

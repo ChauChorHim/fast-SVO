@@ -4,14 +4,6 @@
 #include "Dataset.hpp"
 #include "System.hpp"
 
-#include <opencv2/highgui.hpp>
-
-void showFrameNaive(cv::Mat& imLeft) {
-    cv::namedWindow("Display Image", cv::WINDOW_AUTOSIZE); // create window
-    cv::imshow("Display Image", imLeft); // show the image
-    cv::waitKey(50);
-}
-
 int main(int argc, char **argv) {
     if (argc != 3) {
         std::cerr << std::endl << "Usage: ./stereo_kitti path_to_settings path_to_sequence" << std::endl;

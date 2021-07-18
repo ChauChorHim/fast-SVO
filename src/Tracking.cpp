@@ -1,11 +1,14 @@
 /*
  * 
  */
+/*
+ * 
+ */
 #include <iostream>
 
 #include "Tracking.hpp"
 
-
+#include <opencv2/calib3d.hpp>
 
 namespace fast_SVO
 {
@@ -24,6 +27,18 @@ Tracking::Tracking(System* system, const std::string &strSettingFile) : system_(
     K.at<float>(1, 2) = cy;
     K.copyTo(K_);
 
+    cv::Mat P = cv::Mat::zeros(cv::Size_<float>(3, 4), CV_32F);
+    P.at<float>(0, 0) = fx;
+    P.at<float>(0, 2) = cx;
+    P.at<float>(1, 1) = fy;
+    P.at<float>(1, 2) = cy;
+    P.at<float>(2, 2) = 1.;
+    P.copyTo(P1_);
+
+    baseline_ = fSettings["Camera.bf"];
+    P.at<float>(0, 3) = -baseline_;
+    P.copyTo(P2_);
+
     cv::Mat distCoef(4, 1, CV_32F);
     distCoef.at<float>(0) = fSettings["Camera.k1"];
     distCoef.at<float>(1) = fSettings["Camera.k2"];
@@ -35,8 +50,6 @@ Tracking::Tracking(System* system, const std::string &strSettingFile) : system_(
         distCoef.at<float>(4) = k3;
     }
     distCoef.copyTo(distCoef_);
-
-    baseline_ = fSettings["Camera.bf"];
 
     float fps = fSettings["Camera.fps"];
     if (fps == 0)
@@ -86,16 +99,37 @@ void Tracking::updateImagesFeatures(const cv::Mat &imRectLeft, const cv::Mat &im
 }
 
 void Tracking::matchStereoFeaturesNaive() {
-    matcher_->match(leftDescriptors_, rightDescriptors_, matches_);
+    std::vector<std::vector<cv::DMatch>> knnMatches_;
+    //matcher_->match(leftDescriptors_, rightDescriptors_, matches_);
+    matcher_->knnMatch(leftDescriptors_, rightDescriptors_, knnMatches_, 2);
+
+    //-- Filter matches using the Lowe's ratio test
+    const float ratio_thresh = 0.8f;
+    std::vector<cv::KeyPoint> goodLeftKeypoints_, goodRightKeypoints_;
+    size_t j = 0;
+    for (size_t i = 0; i < knnMatches_.size(); i++)
+    {
+        if (knnMatches_[i][0].distance < ratio_thresh * knnMatches_[i][1].distance) {
+            goodMatches_.push_back(knnMatches_[i][0]);
+            leftKeypoints_[j] = leftKeypoints_[i];
+            rightKeypoints_[j] = rightKeypoints_[i];
+            j++;
+        }
+    }
+
+    //-- Triangulate 3D points
+    cv::Mat pnts3D(4,leftKeypoints_.size(),CV_64F);
+    cv::triangulatePoints(P1_, P2_, leftKeypoints_, rightKeypoints_, pnts3D);
+    pnts3D.copyTo(points3d_);
 }
 
 void Tracking::showMatches(const cv::Mat &imRectLeft, const cv::Mat &imRectRight) {
     cv::Mat imMatches;
-    cv::drawMatches(imRectLeft, leftKeypoints_, imRectRight, rightKeypoints_, matches_, imMatches);
-
+    cv::drawMatches(imRectLeft, leftKeypoints_, imRectRight, rightKeypoints_, goodMatches_, imMatches);
     cv::namedWindow("Display Image", cv::WINDOW_AUTOSIZE); // create window
     cv::imshow("Display Image", imMatches); // show the image
     cv::waitKey(50);
+    goodMatches_.clear();
 }
 
 }

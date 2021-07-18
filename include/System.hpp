@@ -36,16 +36,6 @@ private:
     cv::Mat curImRight_;
     double curTimestamp_ = 0;
 
-    //std::vector<cv::KeyPoint> curLeftKeypoints_;
-    //cv::OutputArray curLeftDescriptors_;
-    //std::vector<cv::KeyPoint> curRightKeypoints_;
-    //cv::OutputArray curRightDescriptors_;
-
-    //std::vector<cv::KeyPoint> preLeftKeypoints_;
-    //cv::OutputArray preLeftDescriptors_;
-    //std::vector<cv::KeyPoint> preRightKeypoints_;
-    //cv::OutputArray preRightDescriptors_;
-
     // Tracker. It receives a frame and computes the associated camera pose.
     Tracking* tracker_;
 
