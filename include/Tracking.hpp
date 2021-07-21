@@ -68,8 +68,6 @@ private:
     // features keypoints
     std::vector<cv::KeyPoint> leftKeypoints_, rightKeypoints_, preLeftKeypoints_;
 
-    // features keypoints coordinates
-    std::vector<cv::Point2f> leftKeypointsCoor_, rightKeypointsCoor_, preLeftKeypointsCoor_;
 
     // features descriptors
     cv::Mat leftDescriptors_, rightDescriptors_, preLeftDescriptors_;
@@ -77,7 +75,7 @@ private:
     // features matcher
     cv::Ptr<cv::DescriptorMatcher> matcher_;
 
-    // features matches
+    // features matches, used for visualizing the matching
     std::vector<cv::DMatch> goodMatches_;
 
     // triangulated points
