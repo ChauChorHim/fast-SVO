@@ -37,6 +37,8 @@ public:
 
     void matchFeaturesNaive();
 
+    void getTranform();
+
     enum trackingState {
         NOT_INITIALIZED=1,
         OK=2,
@@ -76,7 +78,7 @@ private:
     cv::Ptr<cv::DescriptorMatcher> matcher_;
 
     // features matches, used for visualizing the matching
-    std::vector<cv::DMatch> goodMatches_;
+    std::vector<cv::DMatch> matches_;
 
     // triangulated points
     cv::Mat points3d_, prePoints3d_;

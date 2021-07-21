@@ -46,6 +46,7 @@ void System::trackStereo() {
     tracker_->matchStereoFeaturesNaive();
     tracker_->showMatches(curImLeft_, curImRight_);
     tracker_->matchFeaturesNaive();
+    tracker_->getTranform();
 }
 
 }
