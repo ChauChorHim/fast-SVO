@@ -101,69 +101,84 @@ void Tracking::matchStereoFeaturesNaive() {
     matcher_->knnMatch(leftDescriptors_, rightDescriptors_, knnMatches, 2);
 
     std::vector<cv::Point2f> leftKeypointsCoor, rightKeypointsCoor;
+    cv::Mat goodLeftDescriptors, goodRightDescriptors;
+    std::vector<cv::KeyPoint> goodLeftKeypoints, goodRightKeypoints;
 
     //-- Filter matches using the Lowe's ratio test and epipolar constraint
     const float ratio_thresh = 0.8f;
     size_t j = 0;
     for (size_t i = 0; i < knnMatches.size(); i++)
     {
-        if (knnMatches[i][0].distance < ratio_thresh * knnMatches[i][1].distance && abs(leftKeypoints_[i].pt.y - rightKeypoints_[i].pt.y) < 0.1) {
+        size_t leftIndex = knnMatches[i][0].queryIdx;
+        size_t rightIndex = knnMatches[i][0].trainIdx;
+        if (knnMatches[i][0].distance < ratio_thresh * knnMatches[i][1].distance && abs(leftKeypoints_[leftIndex].pt.y - rightKeypoints_[rightIndex].pt.y) < 0.1) {
+            knnMatches[i][0].queryIdx = j;
+            knnMatches[i][0].trainIdx = j;
             goodMatches_.push_back(knnMatches[i][0]);
-            leftKeypointsCoor.push_back(leftKeypoints_[i].pt);
-            rightKeypointsCoor.push_back(rightKeypoints_[i].pt);
-            leftKeypoints_[j] = leftKeypoints_[i]; // push the keypoints correspoinding to good matches to the correct position
-            rightKeypoints_[j] = rightKeypoints_[i];
+
+            leftKeypointsCoor.push_back(leftKeypoints_[leftIndex].pt); // leftKeypointsCoor and rightKeypointsCoor are used in cv::triangulatePoints()
+            rightKeypointsCoor.push_back(rightKeypoints_[rightIndex].pt);
+
+            goodLeftKeypoints.push_back(leftKeypoints_[leftIndex]);
+            goodRightKeypoints.push_back(rightKeypoints_[rightIndex]);
+
+            goodLeftDescriptors.push_back(leftDescriptors_.row(leftIndex));
+            goodRightDescriptors.push_back(rightDescriptors_.row(rightIndex));
             j++;
         }
     }
+    //-- Move the goodLeftKeypoints and goodRightKeypoints to leftKeypoints and rightKeypoints
+    leftKeypoints_ = std::move(goodLeftKeypoints);
+    rightKeypoints_ = std::move(goodRightKeypoints);
 
-    //-- delete unqualified keypoints
-    //leftKeypoints_.erase(leftKeypoints_.begin()+j, leftKeypoints_.end());
-    //rightKeypoints_.erase(rightKeypoints_.begin()+j, rightKeypoints_.end());
+    //-- Move the goodLeftDescriptors and goodRightDescriptors to leftDescriptors and rightDescriptors
+    leftDescriptors_ = std::move(goodLeftDescriptors);
+    rightDescriptors_ = std::move(goodRightDescriptors);
 
     //-- Triangulate 3D points with qualified matches
-    if (leftKeypointsCoor.size() >= 4) {
-        cv::Mat pnts3D(4, leftKeypoints_.size(), CV_64F);
+    if (leftKeypointsCoor.size() >= 4) { // P3P needs at least 4 points
+        cv::Mat pnts3D(4, leftKeypointsCoor.size(), CV_64F);
         cv::triangulatePoints(P1_, P2_, leftKeypointsCoor, rightKeypointsCoor, pnts3D);
         points3d_ = std::move(pnts3D);
     }
 }
 
 void Tracking::showMatches(const cv::Mat &imRectLeft, const cv::Mat &imRectRight) {
-    if (goodMatches_.size() < 4) {
+    if (goodMatches_.size() < 4) { // cv::drawMatches can't receive empty input array
         std::cout << "Dump this frame. There are only " << goodMatches_.size() << " matches" << std::endl;
         return;
     }
     cv::Mat imMatches;
     cv::drawMatches(imRectLeft, leftKeypoints_, imRectRight, rightKeypoints_, goodMatches_, imMatches);
-    cv::namedWindow("Display Image", cv::WINDOW_AUTOSIZE); // create window
-    cv::imshow("Display Image", imMatches); // show the image
+    cv::namedWindow("Stereo matching features", cv::WINDOW_AUTOSIZE); // create window
+    cv::imshow("Stereo matching features", imMatches); // show the image
     cv::waitKey(50);
     goodMatches_.clear();
 }
 
 void Tracking::matchFeaturesNaive() {
     if (state == OK) {
-        std::vector<std::vector<cv::DMatch>> knnMatches_;
-        std::cout << "leftDescriptors_.size() = " << leftDescriptors_.size() << ", preLeftDescriptors_.size() = " << preLeftDescriptors_.size() << std::endl;
-        matcher_->knnMatch(leftDescriptors_, preLeftDescriptors_, knnMatches_, 2);
+        std::vector<std::vector<cv::DMatch>> knnMatches;
+        matcher_->knnMatch(leftDescriptors_, preLeftDescriptors_, knnMatches, 2);
+
+        cv::Mat prePoints3d;
 
         //-- Filter matches using the Lowe's ratio test
         const float ratio_thresh = 0.8f;
         size_t j = 0;
-        std::cout << knnMatches_.size() << std::endl;
-        for (size_t i = 0; i < knnMatches_.size(); i++)
+
+        for (size_t i = 0; i < knnMatches.size(); i++)
         {
-            if (knnMatches_[i][0].distance < ratio_thresh * knnMatches_[i][1].distance) {
-                leftKeypoints_[j] = leftKeypoints_[i];
-                points3d_.col(i).copyTo(prePoints3d_.col(j));
+            size_t curIndex = knnMatches[i][0].queryIdx;
+            size_t preIndex = knnMatches[i][0].trainIdx;
+            if (knnMatches[i][0].distance < ratio_thresh * knnMatches[i][1].distance) {
+                leftKeypoints_[j] = leftKeypoints_[curIndex];
+                prePoints3d.push_back(prePoints3d_.col(preIndex).t());
                 j++;
-                std::cout << "j = " << j << ", i = " << i << std::endl;
             }
         }
-        std::cout << "1" << std::endl;
-        prePoints3d_ = prePoints3d_(cv::Rect(0, 0, j, 4));
-        std::cout << "prePoints3d_.size() = " << prePoints3d_.size() << ", points3d_.size() = " << points3d_.size() << std::endl;
+        prePoints3d_ = std::move(prePoints3d.t());
+        
     } else if (state == NOT_INITIALIZED) {
         prePoints3d_ = points3d_;
         preLeftKeypoints_ = leftKeypoints_;
