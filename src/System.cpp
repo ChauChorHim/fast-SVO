@@ -5,6 +5,7 @@
  * 
  */
 #include <iostream> // cerr
+#include <tuple>
 
 #include "System.hpp"
 
@@ -46,7 +47,12 @@ void System::trackStereo() {
     tracker_->matchStereoFeaturesNaive();
     tracker_->showMatches(curImLeft_, curImRight_);
     tracker_->matchFeaturesNaive();
-    tracker_->getTranform();
+    tracker_->getTranform(R_, T_);
+    combineTransform();
+}
+
+void System::combineTransform() {
+
 }
 
 }

@@ -12,6 +12,8 @@
 
 #include <string>
 
+#include "Solver.hpp"
+
 #define OPENCV_TRAITS_ENABLE_DEPRECATED
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/cvstd.hpp>
@@ -37,7 +39,7 @@ public:
 
     void matchFeaturesNaive();
 
-    void getTranform();
+    void getTranform(cv::Mat &R, cv::Mat &T);
 
     enum trackingState {
         NOT_INITIALIZED=1,
@@ -70,7 +72,6 @@ private:
     // features keypoints
     std::vector<cv::KeyPoint> leftKeypoints_, rightKeypoints_, preLeftKeypoints_;
 
-
     // features descriptors
     cv::Mat leftDescriptors_, rightDescriptors_, preLeftDescriptors_;
 
@@ -82,6 +83,9 @@ private:
 
     // triangulated points
     cv::Mat points3d_, prePoints3d_;
+
+    // p3p solver
+    Solver* p3pSolver_;
 };
 }
 

@@ -74,11 +74,9 @@ Tracking::Tracking(System* system, const std::string &strSettingFile) : system_(
         std::cout << "- color order: BGR (ignored if grayscale)" << std::endl;
 
     // Load ORB parameters
-
     int nFeatures = fSettings["ORBextractor.nFeatures"];
     float scaleFactor = fSettings["ORBextractor.scaleFactor"];
     int nLevels = fSettings["ORBextractor.nLevels"];
-
     ORBextractorLeft_ = cv::ORB::create(nFeatures,scaleFactor,nLevels);
     ORBextractorRight_ = cv::ORB::create(nFeatures,scaleFactor,nLevels);
 
@@ -88,6 +86,11 @@ Tracking::Tracking(System* system, const std::string &strSettingFile) : system_(
     std::cout << "- Scale Factor: " << scaleFactor << std::endl;
 
     matcher_ = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE_HAMMING);
+
+    // Load RANSAC parameters
+    const float confidence = fSettings["RANSAC.confidence"];
+    const float probability = fSettings["RANSAC.probability"];
+    p3pSolver_ = new Solver(confidence, probability);
 }
 
 
@@ -186,8 +189,6 @@ void Tracking::matchFeaturesNaive() {
 
                 goodLeftKeypoints.push_back(leftKeypoints_[curIndex]);
                 goodLeftDescriptors.push_back(leftDescriptors_.row(curIndex));
-//                std::cout << prePoints3d_.col(preIndex).size << std::endl;
-                std::cout << prePoints3d_.size << ", " << preIndex << std::endl;
                 prePoints3d.push_back(prePoints3d_.col(preIndex).t());
                 j++;
             }
@@ -206,7 +207,10 @@ void Tracking::matchFeaturesNaive() {
 
 }
 
-void Tracking::getTranform() {
+void Tracking::getTranform(cv::Mat &R, cv::Mat &t) {
+
+
+    //-- update the 3D-2D features
     prePoints3d_ = points3d_;
     preLeftKeypoints_ = leftKeypoints_;
     preLeftDescriptors_ = leftDescriptors_;

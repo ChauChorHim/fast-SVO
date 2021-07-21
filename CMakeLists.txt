@@ -26,6 +26,7 @@ add_library(
     src/Dataset.cpp
     src/System.cpp
     src/Tracking.cpp
+    src/Solver.cpp
 )
 
 

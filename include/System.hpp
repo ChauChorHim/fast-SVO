@@ -28,8 +28,11 @@ private:
     cv::Mat curImLeft_, curImRight_, preImLeft_;
     double curTimestamp_ = 0;
 
-    // Tracker. It receives a frame and computes the associated camera pose.
+    //-- Tracker. It receives a frame and computes the associated camera pose.
     Tracking* tracker_;
+
+    //-- Current 3D-2D estimated Rotation matrix and translation matrix
+    cv::Mat R_, T_;
 
 public:
     System(const Dataset *dataset, const std::string &strSettingFile, const DatasetType datasetType);
@@ -38,7 +41,10 @@ public:
 
     void trackStereo();
 
+    void combineTransform();
+
     void saveTrajecotry(const std::string &filename);
+
 };
 
 
