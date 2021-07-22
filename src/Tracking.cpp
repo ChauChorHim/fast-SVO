@@ -90,7 +90,7 @@ Tracking::Tracking(System* system, const std::string &strSettingFile) : system_(
     // Load RANSAC parameters
     const float confidence = fSettings["RANSAC.confidence"];
     const float probability = fSettings["RANSAC.probability"];
-    p3pSolver_ = new Solver(confidence, probability);
+    p3pSolver_ = new Solver(confidence, probability, K_);
 }
 
 
@@ -207,13 +207,15 @@ void Tracking::matchFeaturesNaive() {
 
 }
 
-void Tracking::getTranform(cv::Mat &R, cv::Mat &t) {
+void Tracking::getTranform(cv::Mat &R, cv::Mat &T) {
 
+    p3pSolver_->p3pRansac(R, T, prePoints3d_, leftKeypoints_);
 
     //-- update the 3D-2D features
     prePoints3d_ = points3d_;
     preLeftKeypoints_ = leftKeypoints_;
     preLeftDescriptors_ = leftDescriptors_;
 }
+
 
 }
