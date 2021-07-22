@@ -84,8 +84,8 @@ private:
     // triangulated 3D points
     cv::Mat points3d_, prePoints3d_;
 
-    // left camera 2D points
-    cv::Mat points2d_, prePoints2d_;
+    // 2D points in left camera image frame
+    cv::Mat points2d_;
 
     // p3p solver
     Solver* p3pSolver_;

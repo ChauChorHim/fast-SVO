@@ -90,7 +90,14 @@ Tracking::Tracking(System* system, const std::string &strSettingFile) : system_(
     // Load RANSAC parameters
     const float confidence = fSettings["RANSAC.confidence"];
     const float probability = fSettings["RANSAC.probability"];
-    p3pSolver_ = new Solver(confidence, probability, K_);
+    const size_t numIter = ceil(log(1. - confidence) / log(1. - pow(probability, 4)));
+    const float epsilon = K_.at<float>(0, 2) * 0.02;
+    std::cout << std::endl  << "RANSAC Parameters: " << std::endl;
+    std::cout << "- RANSAC confidence: " << confidence << std::endl;
+    std::cout << "- RANSAC probability: " << probability << std::endl;
+    std::cout << "- RANSAC Number of Iteration: " << numIter << std::endl;
+    std::cout << "- RANSAC epsilon: " << epsilon << std::endl;
+    p3pSolver_ = new Solver(numIter, epsilon, K_);
 }
 
 
@@ -169,10 +176,10 @@ void Tracking::matchFeaturesNaive() {
         matcher_->knnMatch(leftDescriptors_, preLeftDescriptors_, knnMatches, 2);
 
         std::vector<cv::DMatch> goodMatches;
-
         std::vector<cv::KeyPoint> goodLeftKeypoints;
         cv::Mat goodLeftDescriptors;
         cv::Mat prePoints3d;
+        cv::Mat points2d;
 
         //-- Filter matches using the Lowe's ratio test
         const float ratio_thresh = 0.8f;
@@ -190,6 +197,11 @@ void Tracking::matchFeaturesNaive() {
                 goodLeftKeypoints.push_back(leftKeypoints_[curIndex]);
                 goodLeftDescriptors.push_back(leftDescriptors_.row(curIndex));
                 prePoints3d.push_back(prePoints3d_.col(preIndex).t());
+                cv::Mat point2d(1, 3, CV_32FC1);
+                point2d.at<float>(0, 0) = leftKeypoints_[curIndex].pt.x;
+                point2d.at<float>(1, 0) = leftKeypoints_[curIndex].pt.y;
+                point2d.at<float>(2, 0) = 1;
+                points2d.push_back(point2d);
                 j++;
             }
         }
@@ -197,6 +209,7 @@ void Tracking::matchFeaturesNaive() {
         leftKeypoints_ = std::move(goodLeftKeypoints);
         leftDescriptors_ = std::move(goodLeftDescriptors);
         prePoints3d_ = std::move(prePoints3d.t());
+        points2d_ = std::move(points2d.t());
         
     } else if (state == NOT_INITIALIZED) {
         prePoints3d_ = points3d_;
@@ -209,7 +222,8 @@ void Tracking::matchFeaturesNaive() {
 
 void Tracking::getTranform(cv::Mat &R, cv::Mat &T) {
 
-    p3pSolver_->p3pRansac(R, T, prePoints3d_, leftKeypoints_);
+    if (!points2d_.empty())
+        p3pSolver_->p3pRansac(R, T, prePoints3d_, points2d_);
 
     //-- update the 3D-2D features
     prePoints3d_ = points3d_;

@@ -10,15 +10,16 @@ class Tracking;
 
 class Solver {
 public:
-    Solver(const float confidence, const float probability, const cv::Mat K);
-    void p3pRansac(cv::Mat &R, cv::Mat &T, const cv::Mat &points3D, std::vector<cv::KeyPoint> &keypoints2D);
+    Solver(const size_t numIter, const float epsilon, const cv::Mat K);
+    void p3pRansac(cv::Mat &R, cv::Mat &T, const cv::Mat &points3D, const cv::Mat &points2d);
 
 private:
-    const std::size_t numIter_;
+    const size_t numIter_;
     const float epsilon_;
     const cv::Mat K_;
-    const cv::Mat invK_;
+    cv::Mat invK_;
 
+    // 2D points in left camera frame
     cv::Mat points2D_;
 };
     
