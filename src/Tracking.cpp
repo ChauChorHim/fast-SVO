@@ -21,33 +21,28 @@ Tracking::Tracking(System* system, const std::string &strSettingFile) : system_(
     float cx = fSettings["Camera.cx"];
     float cy = fSettings["Camera.cy"];
 
-    cv::Mat K = cv::Mat::eye(3, 3, CV_32F);
-    K.at<float>(0, 0) = fx;
-    K.at<float>(1, 1) = fy;
-    K.at<float>(0, 2) = cx;
-    K.at<float>(1, 2) = cy;
-    K.copyTo(K_);
+    K_ << fx, 0, cx,
+          0, fy, cy,
+          0, 0, 1;
 
-    cv::Matx34d P = cv::Matx34d(K.at<float>(0, 0), K.at<float>(0, 1), K.at<float>(0, 2), 0,
-                                K.at<float>(1, 0), K.at<float>(1, 1), K.at<float>(1, 2), 0,
-                                K.at<float>(2, 0), K.at<float>(2, 1), K.at<float>(2, 2), 0);
+    cv::Matx34d P = cv::Matx34d(K_(0, 0), K_(0, 1), K_(0, 2), 0,
+                                K_(1, 0), K_(1, 1), K_(1, 2), 0,
+                                K_(2, 0), K_(2, 1), K_(2, 2), 0);
     P1_ = P;
 
     baseline_ = fSettings["Camera.bf"];
     P(0, 3) = -baseline_;
     P2_ = P;
 
-    cv::Mat distCoef(4, 1, CV_32F);
-    distCoef.at<float>(0) = fSettings["Camera.k1"];
-    distCoef.at<float>(1) = fSettings["Camera.k2"];
-    distCoef.at<float>(2) = fSettings["Camera.p1"];
-    distCoef.at<float>(3) = fSettings["Camera.p2"];
+    distCoef_(0) = fSettings["Camera.k1"];
+    distCoef_(1) = fSettings["Camera.k2"];
+    distCoef_(2) = fSettings["Camera.p1"];
+    distCoef_(3) = fSettings["Camera.p2"];
     const float k3 = fSettings["Camera.k3"];
     if(k3!=0) {
-        distCoef.resize(5);
-        distCoef.at<float>(4) = k3;
+        distCoef_.resize(5);
+        distCoef_(4) = k3;
     }
-    distCoef.copyTo(distCoef_);
 
     float fps = fSettings["Camera.fps"];
     if (fps == 0)
@@ -58,12 +53,12 @@ Tracking::Tracking(System* system, const std::string &strSettingFile) : system_(
     std::cout << "- fy: " << fy << std::endl;
     std::cout << "- cx: " << cx << std::endl;
     std::cout << "- cy: " << cy << std::endl;
-    std::cout << "- k1: " << distCoef.at<float>(0) << std::endl;
-    std::cout << "- k2: " << distCoef.at<float>(1) << std::endl;
-    if(distCoef.rows==5)
-        std::cout << "- k3: " << distCoef.at<float>(4) << std::endl;
-    std::cout << "- p1: " << distCoef.at<float>(2) << std::endl;
-    std::cout << "- p2: " << distCoef.at<float>(3) << std::endl;
+    std::cout << "- k1: " << distCoef_(0) << std::endl;
+    std::cout << "- k2: " << distCoef_(1) << std::endl;
+    if(distCoef_.rows()==5)
+        std::cout << "- k3: " << distCoef_(4) << std::endl;
+    std::cout << "- p1: " << distCoef_(2) << std::endl;
+    std::cout << "- p2: " << distCoef_(3) << std::endl;
     std::cout << "- fps: " << fps << std::endl;
 
     int rgbOrder = fSettings["Camera.RGB"];
@@ -74,9 +69,9 @@ Tracking::Tracking(System* system, const std::string &strSettingFile) : system_(
         std::cout << "- color order: BGR (ignored if grayscale)" << std::endl;
 
     // Load ORB parameters
-    int nFeatures = fSettings["ORBextractor.nFeatures"];
-    float scaleFactor = fSettings["ORBextractor.scaleFactor"];
-    int nLevels = fSettings["ORBextractor.nLevels"];
+    const int nFeatures = fSettings["ORBextractor.nFeatures"];
+    const float scaleFactor = fSettings["ORBextractor.scaleFactor"];
+    const int nLevels = fSettings["ORBextractor.nLevels"];
     ORBextractorLeft_ = cv::ORB::create(nFeatures,scaleFactor,nLevels);
     ORBextractorRight_ = cv::ORB::create(nFeatures,scaleFactor,nLevels);
 
@@ -91,7 +86,7 @@ Tracking::Tracking(System* system, const std::string &strSettingFile) : system_(
     const float confidence = fSettings["RANSAC.confidence"];
     const float probability = fSettings["RANSAC.probability"];
     const size_t numIter = ceil(log(1. - confidence) / log(1. - pow(probability, 4)));
-    const float epsilon = K_.at<float>(0, 2) * 0.02;
+    const float epsilon = K_(0, 2) * 0.02;
     std::cout << std::endl  << "RANSAC Parameters: " << std::endl;
     std::cout << "- RANSAC confidence: " << confidence << std::endl;
     std::cout << "- RANSAC probability: " << probability << std::endl;
@@ -154,7 +149,9 @@ void Tracking::matchStereoFeaturesNaive() {
     if (leftKeypointsCoor.size() >= 4) { // P3P needs at least 4 points
         cv::Mat pnts3D(4, leftKeypointsCoor.size(), CV_64F);
         cv::triangulatePoints(P1_, P2_, leftKeypointsCoor, rightKeypointsCoor, pnts3D);
-        points3d_ = std::move(pnts3D);
+        size_t colsNum = pnts3D.cols;
+        points3d_.conservativeResize(Eigen::NoChange, colsNum);
+        cv::cv2eigen(pnts3D, points3d_);
     }
 }
 
@@ -167,20 +164,19 @@ void Tracking::showMatches(const cv::Mat &imRectLeft, const cv::Mat &imRectRight
     cv::drawMatches(imRectLeft, leftKeypoints_, imRectRight, rightKeypoints_, matches_, imMatches);
     cv::namedWindow("Stereo matching features", cv::WINDOW_AUTOSIZE); // create window
     cv::imshow("Stereo matching features", imMatches); // show the image
-    cv::waitKey(50);
+    cv::waitKey(10);
 }
 
 void Tracking::matchFeaturesNaive() {
     if (state == OK) {
         std::vector<std::vector<cv::DMatch>> knnMatches;
         matcher_->knnMatch(leftDescriptors_, preLeftDescriptors_, knnMatches, 2);
-
         std::vector<cv::DMatch> goodMatches;
         std::vector<cv::KeyPoint> goodLeftKeypoints;
         cv::Mat goodLeftDescriptors;
-        cv::Mat prePoints3d;
-        cv::Mat points2d;
-
+        Eigen::Matrix<double, 4, Eigen::Dynamic> prePoints3d;
+        Eigen::Matrix<double, 3, Eigen::Dynamic> points2d;
+        
         //-- Filter matches using the Lowe's ratio test
         const float ratio_thresh = 0.8f;
         size_t j = 0;
@@ -196,20 +192,24 @@ void Tracking::matchFeaturesNaive() {
 
                 goodLeftKeypoints.push_back(leftKeypoints_[curIndex]);
                 goodLeftDescriptors.push_back(leftDescriptors_.row(curIndex));
-                prePoints3d.push_back(prePoints3d_.col(preIndex).t());
-                cv::Mat point2d(1, 3, CV_32FC1);
-                point2d.at<float>(0, 0) = leftKeypoints_[curIndex].pt.x;
-                point2d.at<float>(1, 0) = leftKeypoints_[curIndex].pt.y;
-                point2d.at<float>(2, 0) = 1;
-                points2d.push_back(point2d);
+
+                const int curCols3D = prePoints3d.cols();
+                prePoints3d.conservativeResize(Eigen::NoChange, curCols3D + 1);
+                prePoints3d.col(curCols3D) = prePoints3d_.col(preIndex);
+
+                Eigen::Vector3d point2d;
+                const int curCols2D = points2d.cols();
+                point2d << leftKeypoints_[curIndex].pt.x, leftKeypoints_[curIndex].pt.y, 1;
+                points2d.conservativeResize(Eigen::NoChange, curCols2D + 1);
+                points2d.col(curCols3D) = point2d;
+
                 j++;
             }
         }
-
         leftKeypoints_ = std::move(goodLeftKeypoints);
         leftDescriptors_ = std::move(goodLeftDescriptors);
-        prePoints3d_ = std::move(prePoints3d.t());
-        points2d_ = std::move(points2d.t());
+        prePoints3d_ = std::move(prePoints3d);
+        points2d_ = std::move(points2d);
         
     } else if (state == NOT_INITIALIZED) {
         prePoints3d_ = points3d_;
@@ -220,16 +220,15 @@ void Tracking::matchFeaturesNaive() {
 
 }
 
-void Tracking::getTranform(cv::Mat &R, cv::Mat &T) {
-
-    if (!points2d_.empty())
-        p3pSolver_->p3pRansac(R, T, prePoints3d_, points2d_);
-
+void Tracking::getTranform(Eigen::Matrix3d &R, Eigen::Vector3d &T) {
+    if (points2d_.cols()) {
+        //p3pSolver_->p3pRansac(R, T, prePoints3d_, points2d_);
+    }
     //-- update the 3D-2D features
-    prePoints3d_ = points3d_;
+    auto prePoints3d = points3d_;
+    prePoints3d_ = std::move(prePoints3d);
     preLeftKeypoints_ = leftKeypoints_;
     preLeftDescriptors_ = leftDescriptors_;
 }
-
 
 }

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(fast_SVO)
 
 SET(CMAKE_BUILD_TYPE "Debug")
-SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb")
+SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb -Wno-int-in-bool-context")
 SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 
 find_package(OpenCV 4.0 QUIET)
@@ -13,10 +13,13 @@ if(NOT OpenCV_FOUND)
     endif()
 endif()
 
+find_package(Eigen3 3.3.2 REQUIRED)
+
 include_directories(
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/include
     ${OpenCV_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -42,6 +45,7 @@ add_executable(
 target_link_libraries(
     stereo_kitti
     ${OpenCV_LIBS}
+    ${EIGEN3_LIBS}
 )
 target_link_libraries(stereo_kitti ${PROJECT_NAME})
 

@@ -31,8 +31,9 @@ private:
     //-- Tracker. It receives a frame and computes the associated camera pose.
     Tracking* tracker_;
 
-    //-- Current 3D-2D estimated Rotation matrix and translation matrix
-    cv::Mat R_, T_;
+    //-- Current 3D-2D estimated Rotation matrix and translation vector
+    Eigen::Matrix3d R_; 
+    Eigen::Vector3d T_;
 
 public:
     System(const Dataset *dataset, const std::string &strSettingFile, const DatasetType datasetType);

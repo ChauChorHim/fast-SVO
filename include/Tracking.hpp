@@ -1,12 +1,3 @@
-/*
- * 
- */
-/*
- * 
- */
-/*
- * 
- */
 #ifndef TRACKING_H
 #define TRACKING_H
 
@@ -39,7 +30,7 @@ public:
 
     void matchFeaturesNaive();
 
-    void getTranform(cv::Mat &R, cv::Mat &T);
+    void getTranform(Eigen::Matrix3d &R, Eigen::Vector3d &T);
 
     enum trackingState {
         NOT_INITIALIZED=1,
@@ -52,8 +43,8 @@ private:
     trackingState state;
 
     // Calibration matrix
-    cv::Mat K_;
-    cv::Mat distCoef_;
+    Eigen::Matrix3d K_;
+    Eigen::Vector4d distCoef_;
     float baseline_;
 
     // Projection matrix
@@ -82,10 +73,10 @@ private:
     std::vector<cv::DMatch> matches_;
 
     // triangulated 3D points
-    cv::Mat points3d_, prePoints3d_;
+    Eigen::Matrix<double, 4, Eigen::Dynamic> points3d_, prePoints3d_;
 
     // 2D points in left camera image frame
-    cv::Mat points2d_;
+    Eigen::Matrix<double, 3, Eigen::Dynamic> points2d_;
 
     // p3p solver
     Solver* p3pSolver_;
