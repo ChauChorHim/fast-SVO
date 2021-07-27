@@ -21,9 +21,10 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matr
     size_t lastRowNum = points2D.rows() - 1; // May delete?
     points2D.array().rowwise() /= points2D.row(lastRowNum).array(); // May delete?
 
+    Eigen::Matrix<double, 3, Eigen::Dynamic> points2D_norm = points2D;
     // Normalize the 2D points
-    for (int i = 0; i < points2D.cols(); ++i)
-        points2D.col(i).normalize();
+    for (int i = 0; i < points2D_norm.cols(); ++i)
+        points2D_norm.col(i).normalize();
 
     // Random machine setup
     long int numPoints{points3D.cols()};
@@ -34,14 +35,22 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matr
 
     // potential poses
     Eigen::Matrix<double, 3, 16> poses;
+
+    // temp estimated R and T
+    Eigen::Matrix3d R_tmp;
+    Eigen::Vector3d T_tmp;
+
     for (size_t i = 0; i < numIter_; ++i) {
         // Get 4 random points for p3p 
         for (size_t i = 0; i < randomNumbers.size(); ++i) {
             randomNumbers[i] = randomDistribution(eng);
         }   
         const auto worldPoints = points3D(Eigen::all, randomNumbers);
-        const auto imageVectors = points2D(Eigen::all, randomNumbers);
+        const auto imageVectors = points2D_norm(Eigen::all, randomNumbers);
+
         p3p(worldPoints, imageVectors, poses);
+        
+        bool validEstimate = uniqueSolution(poses, R_tmp, T_tmp, worldPoints, points2D);
     }
 }
 
@@ -242,5 +251,21 @@ void Solver::roots4thOrder(const std::vector<double> &factors) {
     roots_[3] = -B / (4 * A) + 0.5 * (-w - std::sqrt(std::complex<double>(-(3 * alpha + 2 * y - 2 * beta / w))));
 }
 
+bool Solver::uniqueSolution(const Eigen::Matrix<double, 3, 16> &poses, Eigen::Matrix3d &R_tmp, Eigen::Vector3d &T_tmp, const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::internal::AllRange<4>, std::vector<int>> &worldPoints, const Eigen::Matrix3Xd &points2D) {
+    try
+    {
+        for (int i = 0; i < int(poses.cols() / 4); ++i) {
+            
+        }
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        R_tmp = Eigen::Matrix3d::Zero();
+        T_tmp = Eigen::Vector3d::Zero();
+        return false;
+    }
+    
+}
 
 } // namespace fast_SVO

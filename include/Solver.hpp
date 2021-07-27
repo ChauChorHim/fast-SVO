@@ -20,6 +20,7 @@ public:
 private:
     void p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::internal::AllRange<4>, std::vector<int>> &worldPoints, const Eigen::IndexedView<Eigen::Matrix3Xd, Eigen::internal::AllRange<3>, std::vector<int>> &imageVectors, Eigen::Matrix<double, 3, 16> &poses);
     void roots4thOrder(const std::vector<double> &factors);
+    bool uniqueSolution(const Eigen::Matrix<double, 3, 16> &poses, Eigen::Matrix3d &R_tmp, Eigen::Vector3d &T_tmp, const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::internal::AllRange<4>, std::vector<int>> &worldPoints, const Eigen::Matrix3Xd &points2D);
     const size_t numIter_;
     const float epsilon_;
     const Eigen::Matrix3d K_;

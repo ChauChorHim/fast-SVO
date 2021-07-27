@@ -227,7 +227,7 @@ void Tracking::getTranform(Eigen::Matrix3d &R, Eigen::Vector3d &T) {
         p3pSolver_->p3pRansac(R, T, prePoints3d_, points2d_);
     }
     //-- update the 3D-2D features
-    auto prePoints3d = points3d_;
+    Eigen::Matrix4d prePoints3d = points3d_;
     prePoints3d_ = std::move(prePoints3d);
     preLeftKeypoints_ = leftKeypoints_;
     preLeftDescriptors_ = leftDescriptors_;
