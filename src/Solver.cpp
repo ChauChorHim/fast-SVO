@@ -11,8 +11,6 @@ namespace fast_SVO
     
 Solver::Solver(const size_t numIter, const float epsilon, const Eigen::Matrix3d K) : numIter_{numIter}, epsilon_{epsilon}, K_{K} {
     invK_ = K.inverse();
-    std::cout << K << std::endl << std::endl;
-    std::cout << invK_ << std::endl << std::endl;
 }
 
 void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matrix<double, 4, Eigen::Dynamic> &points3D, const Eigen::Matrix<double, 3, Eigen::Dynamic> &points2d) {
@@ -39,13 +37,28 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matr
         for (size_t i = 0; i < randomNumbers.size(); ++i) {
             randomNumbers[i] = randomDistribution(eng);
         }   
-        p3p(points3D(Eigen::all, randomNumbers), points2D(Eigen::all, randomNumbers));
-
+        const auto worldPoints = points3D(Eigen::all, randomNumbers);
+        const auto imageVectors = points2D(Eigen::all, randomNumbers);
+        p3p(worldPoints, imageVectors);
     }
 }
 
-void Solver::p3p(const Eigen::Matrix4d &worldPoints, const Eigen::Matrix3d &imageVectors) {
+void Solver::p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::internal::AllRange<4>, std::vector<int>> &worldPoints, 
+                 const Eigen::IndexedView<Eigen::Matrix3Xd, Eigen::internal::AllRange<3>, std::vector<int>> &imageVectors) {
+    // Derive world points
+    Eigen::Vector4d worldPoint1 = worldPoints(Eigen::all, 0);
+    Eigen::Vector4d worldPoint2 = worldPoints(Eigen::all, 1);
+    Eigen::Vector4d worldPoint3 = worldPoints(Eigen::all, 2);
+    std::cout << worldPoint1 << std::endl << worldPoint2 << std::endl;
 
+    // Vectors between world points
+    Eigen::Vector4d vect1 = worldPoint2 - worldPoint1;
+    Eigen::Vector4d vect2 = worldPoint3 - worldPoint1;
+/*
+    if (vect1.cross(vect2).norm()) {
+        std::cerr << "The three points used in p3p must be non-collinear" << std::endl;
+    }
+    */
 }
 
 

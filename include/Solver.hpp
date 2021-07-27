@@ -17,8 +17,7 @@ public:
     void p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matrix<double, 4, Eigen::Dynamic> &points3D, const Eigen::Matrix<double, 3, Eigen::Dynamic> &points2d);
 
 private:
-    void p3p(const Eigen::Matrix4d &worldPoints, const Eigen::Matrix3d &imageVectors);
-
+    void p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::internal::AllRange<4>, std::vector<int>> &worldPoints, const Eigen::IndexedView<Eigen::Matrix3Xd, Eigen::internal::AllRange<3>, std::vector<int>> &imageVectors);
     const size_t numIter_;
     const float epsilon_;
     const Eigen::Matrix3d K_;

@@ -152,6 +152,8 @@ void Tracking::matchStereoFeaturesNaive() {
         size_t colsNum = pnts3D.cols;
         points3d_.conservativeResize(Eigen::NoChange, colsNum);
         cv::cv2eigen(pnts3D, points3d_);
+        size_t lastRowNum = points3d_.rows() - 1;
+        points3d_.array().rowwise() /= points3d_.row(lastRowNum).array();
     }
 }
 
