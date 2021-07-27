@@ -11,6 +11,7 @@ namespace fast_SVO
     
 Solver::Solver(const size_t numIter, const float epsilon, const Eigen::Matrix3d K) : numIter_{numIter}, epsilon_{epsilon}, K_{K} {
     invK_ = K.inverse();
+    roots_ = std::vector<std::complex<double>>(4);
 }
 
 void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matrix<double, 4, Eigen::Dynamic> &points3D, const Eigen::Matrix<double, 3, Eigen::Dynamic> &points2d) {
@@ -26,12 +27,13 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matr
 
     // Random machine setup
     long int numPoints{points3D.cols()};
-    constexpr int p3pNumPoints{4};
     std::random_device randomDevice;
     std::mt19937 eng(randomDevice());
     std::uniform_int_distribution<std::mt19937::result_type> randomDistribution(0, numPoints);
     std::vector<int> randomNumbers(4, 0);
 
+    // potential poses
+    Eigen::Matrix<double, 3, 16> poses;
     for (size_t i = 0; i < numIter_; ++i) {
         // Get 4 random points for p3p 
         for (size_t i = 0; i < randomNumbers.size(); ++i) {
@@ -39,12 +41,13 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matr
         }   
         const auto worldPoints = points3D(Eigen::all, randomNumbers);
         const auto imageVectors = points2D(Eigen::all, randomNumbers);
-        p3p(worldPoints, imageVectors);
+        p3p(worldPoints, imageVectors, poses);
     }
 }
 
 void Solver::p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::internal::AllRange<4>, std::vector<int>> &worldPoints, 
-                 const Eigen::IndexedView<Eigen::Matrix3Xd, Eigen::internal::AllRange<3>, std::vector<int>> &imageVectors) {
+                 const Eigen::IndexedView<Eigen::Matrix3Xd, Eigen::internal::AllRange<3>, std::vector<int>> &imageVectors,
+                 Eigen::Matrix<double, 3, 16> &poses) {
     // Derive world points
     Eigen::Vector3d worldPoint1 = worldPoints(Eigen::all, 0).topRows(3);
     Eigen::Vector3d worldPoint2 = worldPoints(Eigen::all, 1).topRows(3);
@@ -55,7 +58,7 @@ void Solver::p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::interna
     Eigen::Vector3d vect2 = worldPoint3 - worldPoint1;
 
     if (vect1.cross(vect2).norm() == 0) {
-        std::cerr << "The three points used in p3p must be non-collinear" << std::endl;
+        //std::cerr << "The three points used in p3p must be non-collinear" << std::endl;
         return;
     }
 
@@ -116,20 +119,20 @@ void Solver::p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::interna
 
     // Define b = cot(beta)
     double cosBeta = imageVector1.transpose() * imageVector2;
-    double b = 1 / (1 - pow(cosBeta, 2)) - 1;
+    double b = 1 / (1 - std::pow(cosBeta, 2)) - 1;
     b = cosBeta < 0 ? -sqrt(b) : sqrt(b);
 
     // Define auxiliary variables that are helpful to type less
-    double phi1_pw2 = pow(phi1, 2);
-    double phi2_pw2 = pow(phi2, 2);
-    double p1_pw2 = pow(p1, 2);
+    double phi1_pw2 = std::pow(phi1, 2);
+    double phi2_pw2 = std::pow(phi2, 2);
+    double p1_pw2 = std::pow(p1, 2);
     double p1_pw3 = p1_pw2 * p1;
     double p1_pw4 = p1_pw2 * p1;
-    double p2_pw2 = pow(p2, 2);
+    double p2_pw2 = std::pow(p2, 2);
     double p2_pw3 = p2_pw2 * p1;
     double p2_pw4 = p2_pw2 * p1;
-    double d12_pw2 = pow(d12, 2);
-    double b_pw2 = pow(b, 2);
+    double d12_pw2 = std::pow(d12, 2);
+    double b_pw2 = std::pow(b, 2);
 
     // Define the factors of 4th degree polynomial
     double factor4 = -phi2_pw2 * p2_pw4 
@@ -163,6 +166,80 @@ void Solver::p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::interna
                     + p2_pw2 * phi1_pw2 * p1_pw2
                     + phi2_pw2 * p2_pw2 * d12_pw2 * b_pw2;
     std::vector<double> factors {factor4, factor3, factor2, factor1, factor0};
+
+    // Solve the fourth order equation
+    roots4thOrder(factors);
+
+    // Backsubstitute solutions in other equations
+    for (int i = 0; i < 4; ++i) {
+        double cotAlpha = (-phi1 * p1 / phi2 - roots_[i].real() * p2 + d12 * b) / (-phi1 * roots_[i].real() * p2 / phi2 + p1 - d12);
+        double cosTheta = roots_[i].real();
+            
+        double sinTheta = std::sqrt(1 - pow(roots_[i].real(), 2));
+        double sinAlpha = std::sqrt(1 / (pow(cotAlpha, 2) + 1));
+        double cosAlpha = std::sqrt(1 - pow(sinAlpha, 2));
+
+        if (cotAlpha < 0) {
+            cosAlpha = -cosAlpha;
+        }
+
+        // Build C_nu
+        Eigen::Vector3d C_nu;
+        C_nu << d12 * cosAlpha * (sinAlpha * b + cosAlpha),
+                cosTheta * d12 * sinAlpha * (sinAlpha * b + cosAlpha),
+                sinTheta * d12 * sinAlpha * (sinAlpha * b + cosAlpha);
+        
+        // Compute C
+        Eigen::Vector3d C = worldPoint1 + N.transpose() * C_nu;
+
+        // Build Q
+        Eigen::Matrix3d Q;
+        Q << -cosAlpha, -sinAlpha * cosTheta, -sinAlpha * sinTheta,
+             sinAlpha, -cosAlpha * cosTheta, -cosAlpha * sinTheta,
+             0, -sinTheta, cosTheta;
+
+        // Compute R
+        Eigen::Matrix3d R = N.transpose() * Q.transpose() * T;
+
+        poses.col(4 * i) = C;
+        poses.middleCols(4 * i + 1, 3) = R;
+    }
+}
+
+
+void Solver::roots4thOrder(const std::vector<double> &factors) {
+    const double &A{factors[0]};
+    const double &B{factors[1]};
+    const double &C{factors[2]};
+    const double &D{factors[3]};
+    const double &E{factors[4]};
+
+    const double A_pw2 = std::pow(A, 2);
+    const double B_pw2 = std::pow(B, 2);
+    const double A_pw3 = A_pw2 * A;
+    const double B_pw3 = B_pw2 * B;
+    const double A_pw4 = A_pw3 * A;
+    const double B_pw4 = B_pw3 * B;
+
+    const double alpha = -3 * B_pw2 / (8 * A_pw2) + C / A;
+    const double beta = B_pw3 / (8 * A_pw3) - B * C / (2 * A_pw2) + D / A;
+    const double gamma = -3 * B_pw4 / (256 * A_pw4) + B_pw2 * C / (16 * A_pw3) -B * D / (4 * A_pw2) + E / A;
+
+    const double alpha_pw2 = std::pow(alpha, 2);
+    const double alpha_pw3 = alpha_pw2 * alpha;
+
+    const double P = -alpha_pw2 / 12 - gamma;
+    const double Q = -alpha_pw3 / 108 + alpha * gamma / 3 - std::pow(beta, 2) / 8;
+    const double R = -Q / 2 + std::sqrt(pow(Q, 2) / 4 + std::pow(P, 3) / 27);
+    const double U = std::cbrt(R);
+
+    const double y = (U == 0) ? (-5 * alpha / 6 - std::cbrt(Q)) : (-5 * alpha / 6 - P / (3 * U) + U);
+    const double w = std::sqrt(alpha + 2 * y);
+
+    roots_[0] = -B / (4 * A) + 0.5 * (w + std::sqrt(std::complex<double>(-(3 * alpha + 2 * y + 2 * beta / w))));
+    roots_[1] = -B / (4 * A) + 0.5 * (w - std::sqrt(std::complex<double>(-(3 * alpha + 2 * y + 2 * beta / w))));
+    roots_[2] = -B / (4 * A) + 0.5 * (-w + std::sqrt(std::complex<double>(-(3 * alpha + 2 * y - 2 * beta / w))));
+    roots_[3] = -B / (4 * A) + 0.5 * (-w - std::sqrt(std::complex<double>(-(3 * alpha + 2 * y - 2 * beta / w))));
 }
 
 
