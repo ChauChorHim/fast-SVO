@@ -5,6 +5,9 @@ SET(CMAKE_BUILD_TYPE "Debug")
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb -Wno-int-in-bool-context")
 SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+add_definitions(-DCOMPILEDWITHC11)
+
 find_package(OpenCV 4.0 QUIET)
 if(NOT OpenCV_FOUND)
     find_package(OpenCV 2.4.3 QUIET)
@@ -13,7 +16,7 @@ if(NOT OpenCV_FOUND)
     endif()
 endif()
 
-find_package(Eigen3 3.3.2 REQUIRED)
+find_package(Eigen3 3.3.91 REQUIRED)
 
 include_directories(
     ${PROJECT_SOURCE_DIR}

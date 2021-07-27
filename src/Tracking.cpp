@@ -164,7 +164,7 @@ void Tracking::showMatches(const cv::Mat &imRectLeft, const cv::Mat &imRectRight
     cv::drawMatches(imRectLeft, leftKeypoints_, imRectRight, rightKeypoints_, matches_, imMatches);
     cv::namedWindow("Stereo matching features", cv::WINDOW_AUTOSIZE); // create window
     cv::imshow("Stereo matching features", imMatches); // show the image
-    cv::waitKey(10);
+    cv::waitKey(1);
 }
 
 void Tracking::matchFeaturesNaive() {
@@ -222,7 +222,7 @@ void Tracking::matchFeaturesNaive() {
 
 void Tracking::getTranform(Eigen::Matrix3d &R, Eigen::Vector3d &T) {
     if (points2d_.cols()) {
-        //p3pSolver_->p3pRansac(R, T, prePoints3d_, points2d_);
+        p3pSolver_->p3pRansac(R, T, prePoints3d_, points2d_);
     }
     //-- update the 3D-2D features
     auto prePoints3d = points3d_;

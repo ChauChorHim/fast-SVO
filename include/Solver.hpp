@@ -2,6 +2,7 @@
 #define _SOLVER_H
 
 #include <Eigen/Dense>
+#include <Eigen/Cholesky>
 
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/eigen.hpp>
@@ -16,6 +17,8 @@ public:
     void p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matrix<double, 4, Eigen::Dynamic> &points3D, const Eigen::Matrix<double, 3, Eigen::Dynamic> &points2d);
 
 private:
+    void p3p(const Eigen::Matrix4d &worldPoints, const Eigen::Matrix3d &imageVectors);
+
     const size_t numIter_;
     const float epsilon_;
     const Eigen::Matrix3d K_;

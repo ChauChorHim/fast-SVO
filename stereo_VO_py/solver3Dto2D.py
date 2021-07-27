@@ -70,7 +70,7 @@ def P3Pransac(K,pts3D,ptsImg,num_iter=10,epsilon=None):
             # Check consensus
             dist=np.sum( np.square(ptsImg-ptsImg_hat),axis=0)
             inliers_idx = np.where(dist<epsilon)[0]
-            n_inliers = len(inliers_idx);
+            n_inliers = len(inliers_idx)
 
             # Save best result
             if n_inliers > n_best:

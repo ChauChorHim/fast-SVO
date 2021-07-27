@@ -11,6 +11,8 @@ namespace fast_SVO
     
 Solver::Solver(const size_t numIter, const float epsilon, const Eigen::Matrix3d K) : numIter_{numIter}, epsilon_{epsilon}, K_{K} {
     invK_ = K.inverse();
+    std::cout << K << std::endl << std::endl;
+    std::cout << invK_ << std::endl << std::endl;
 }
 
 void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matrix<double, 4, Eigen::Dynamic> &points3D, const Eigen::Matrix<double, 3, Eigen::Dynamic> &points2d) {
@@ -18,10 +20,13 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matr
     Eigen::Matrix<double, 3, Eigen::Dynamic> points2D;
     points2D = invK_ * points2d;
     size_t lastRowNum = points2D.rows() - 1;
-    std::cout << points2D << std::endl;
     points2D.array().rowwise() /= points2D.row(lastRowNum).array();
-    std::cout << points2D << std::endl;
 
+    // Normalize the 2D points
+    for (int i = 0; i < points2D.cols(); ++i)
+        points2D.col(i).normalize();
+
+    // Random machine setup
     long int numPoints{points3D.cols()};
     constexpr int p3pNumPoints{4};
     std::random_device randomDevice;
@@ -34,9 +39,14 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matr
         for (size_t i = 0; i < randomNumbers.size(); ++i) {
             randomNumbers[i] = randomDistribution(eng);
         }   
-        
+        p3p(points3D(Eigen::all, randomNumbers), points2D(Eigen::all, randomNumbers));
 
     }
 }
+
+void Solver::p3p(const Eigen::Matrix4d &worldPoints, const Eigen::Matrix3d &imageVectors) {
+
+}
+
 
 } // namespace fast_SVO
