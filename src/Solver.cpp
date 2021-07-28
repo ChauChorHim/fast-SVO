@@ -182,7 +182,7 @@ void Solver::p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::interna
     std::vector<double> factors {factor4, factor3, factor2, factor1, factor0};
     // Solve the fourth order equation
     roots4thOrder(factors);
-    
+
     // Backsubstitute solutions in other equations
     for (int i = 0; i < 4; ++i) {
         double cotAlpha = (-phi1 * p1 / phi2 - roots_[i].real() * p2 + d12 * b) / (-phi1 * roots_[i].real() * p2 / phi2 + p1 - d12);
@@ -221,38 +221,14 @@ void Solver::p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::interna
 
 
 void Solver::roots4thOrder(const std::vector<double> &factors) {
-    const double &A{factors[0]};
-    const double &B{factors[1]};
-    const double &C{factors[2]};
-    const double &D{factors[3]};
-    const double &E{factors[4]};
-
-    const double A_pw2 = std::pow(A, 2);
-    const double B_pw2 = std::pow(B, 2);
-    const double A_pw3 = A_pw2 * A;
-    const double B_pw3 = B_pw2 * B;
-    const double A_pw4 = A_pw3 * A;
-    const double B_pw4 = B_pw3 * B;
-
-    const double alpha = -3 * B_pw2 / (8 * A_pw2) + C / A;
-    const double beta = B_pw3 / (8 * A_pw3) - B * C / (2 * A_pw2) + D / A;
-    const double gamma = -3 * B_pw4 / (256 * A_pw4) + B_pw2 * C / (16 * A_pw3) -B * D / (4 * A_pw2) + E / A;
-
-    const double alpha_pw2 = std::pow(alpha, 2);
-    const double alpha_pw3 = alpha_pw2 * alpha;
-
-    const double P = -alpha_pw2 / 12 - gamma;
-    const double Q = -alpha_pw3 / 108 + alpha * gamma / 3 - std::pow(beta, 2) / 8;
-    const double R = -Q / 2 + std::sqrt(std::pow(Q, 2) / 4 + std::pow(P, 3) / 27);
-    const double U = std::cbrt(R);
-
-    const double y = (U == 0) ? (-5 * alpha / 6 - std::cbrt(Q)) : (-5 * alpha / 6 - P / (3 * U) + U);
-    const double w = std::sqrt(alpha + 2 * y);
-
-    roots_[0] = -B / (4 * A) + 0.5 * (w + std::sqrt(std::complex<double>(-(3 * alpha + 2 * y + 2 * beta / w))));
-    roots_[1] = -B / (4 * A) + 0.5 * (w - std::sqrt(std::complex<double>(-(3 * alpha + 2 * y + 2 * beta / w))));
-    roots_[2] = -B / (4 * A) + 0.5 * (-w + std::sqrt(std::complex<double>(-(3 * alpha + 2 * y - 2 * beta / w))));
-    roots_[3] = -B / (4 * A) + 0.5 * (-w - std::sqrt(std::complex<double>(-(3 * alpha + 2 * y - 2 * beta / w))));
+    Eigen::Matrix4d matrixAdjoint; 
+    matrixAdjoint << 0, 0, 0, -factors[0]/factors[4],
+                     1, 0, 0, -factors[1]/factors[4],
+                     0, 1, 0, -factors[2]/factors[4],
+                     0, 0, 1, -factors[3]/factors[4];
+    Eigen::Matrix<std::complex<double>, 4, 1> matrixEigen;
+    matrixEigen = matrixAdjoint.eigenvalues();
+    std::cout << "matrixEigen: " << std::endl << matrixEigen << std::endl;
 }
 
 bool Solver::uniqueSolution(const Eigen::Matrix<double, 3, 16> &poses, Eigen::Matrix3d &R_est, Eigen::Vector3d &T_est, const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::internal::AllRange<4>, std::vector<int>> &worldPoints, const Eigen::Matrix3Xd &points2D) {
