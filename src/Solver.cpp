@@ -182,7 +182,7 @@ void Solver::p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::interna
     std::vector<double> factors {factor4, factor3, factor2, factor1, factor0};
     // Solve the fourth order equation
     roots4thOrder(factors);
-std::cout << "4 potential roots: " << roots_[0] << std::endl << roots_[1] << std::endl << roots_[2] << std::endl << roots_[3] << std::endl;
+    
     // Backsubstitute solutions in other equations
     for (int i = 0; i < 4; ++i) {
         double cotAlpha = (-phi1 * p1 / phi2 - roots_[i].real() * p2 + d12 * b) / (-phi1 * roots_[i].real() * p2 / phi2 + p1 - d12);
