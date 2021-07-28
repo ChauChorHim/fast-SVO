@@ -37,8 +37,8 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matr
     Eigen::Matrix<double, 3, 16> poses;
 
     // temp estimated R and T
-    Eigen::Matrix3d R_tmp;
-    Eigen::Vector3d T_tmp;
+    Eigen::Matrix3d R_est;
+    Eigen::Vector3d T_est;
 
     for (size_t i = 0; i < numIter_; ++i) {
         // Get 4 random points for p3p 
@@ -50,7 +50,7 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matr
 
         p3p(worldPoints, imageVectors, poses);
         
-        bool validEstimate = uniqueSolution(poses, R_tmp, T_tmp, worldPoints, points2D);
+        //bool validEstimate = uniqueSolution(poses, R_est, T_est, worldPoints, points2D);
     }
 }
 
@@ -84,14 +84,15 @@ void Solver::p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::interna
     Eigen::Vector3d yTau = zTau.cross(xTau);
     Eigen::Matrix3d T;
     T << xTau, yTau, zTau;
+    T.transposeInPlace();
     
     // Transform imageVector3 from nu to tau using T
     Eigen::Vector3d imageVector3_Tau = T * imageVector3;
 
     // If z-comp of imageVector3_Tau > 0, inverse worldPoint1 and worldPoint2, imageVector1 and imageVector2
     if (imageVector3_Tau(2) > 0) {
-        Eigen::Vector3d worldPoint1 = worldPoints(Eigen::all, 1).topRows(3);
-        Eigen::Vector3d worldPoint2 = worldPoints(Eigen::all, 0).topRows(3); 
+        worldPoint1 = worldPoints(Eigen::all, 1).topRows(3);
+        worldPoint2 = worldPoints(Eigen::all, 0).topRows(3); 
         imageVector1 = imageVectors(Eigen::all, 1);
         imageVector2 = imageVectors(Eigen::all, 0);
         // Recompute the basis of tau frame
@@ -101,7 +102,9 @@ void Solver::p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::interna
         yTau = zTau.cross(xTau);
         Eigen::Matrix3d T_tmp;
         T_tmp << xTau, yTau, zTau;
+        T_tmp.transposeInPlace();
         T = std::move(T_tmp);
+        imageVector3_Tau = T * imageVector3;
     }
 
     // Compute an orthogonal basis for the eta frame and then invert it
@@ -113,11 +116,12 @@ void Solver::p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::interna
     Eigen::Vector3d yEta = zEta.cross(xEta);
     Eigen::Matrix3d N;
     N << xEta, yEta, zEta;
+    N.transposeInPlace();
 
     // Convert worldPoint3 from world frame to nu frame
-    Eigen::Vector3d worldPoint3_Eta = N * (worldPoint3 - worldPoint1);
-    double p1 = worldPoint3_Eta(0);
-    double p2 = worldPoint3_Eta(1);
+    Eigen::Vector3d worldPoint3_Nu = N * (worldPoint3 - worldPoint1);
+    double p1 = worldPoint3_Nu(0);
+    double p2 = worldPoint3_Nu(1);
 
     // Length of vector worldPoint2 - worldPoint1
     double d12 = (worldPoint2 - worldPoint1).norm();
@@ -136,10 +140,10 @@ void Solver::p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::interna
     double phi2_pw2 = std::pow(phi2, 2);
     double p1_pw2 = std::pow(p1, 2);
     double p1_pw3 = p1_pw2 * p1;
-    double p1_pw4 = p1_pw2 * p1;
+    double p1_pw4 = p1_pw3 * p1;
     double p2_pw2 = std::pow(p2, 2);
-    double p2_pw3 = p2_pw2 * p1;
-    double p2_pw4 = p2_pw2 * p1;
+    double p2_pw3 = p2_pw2 * p2;
+    double p2_pw4 = p2_pw3 * p2;
     double d12_pw2 = std::pow(d12, 2);
     double b_pw2 = std::pow(b, 2);
 
@@ -174,11 +178,11 @@ void Solver::p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::interna
                     - 2 * phi2_pw2 * p2_pw2 * p1 * d12
                     + p2_pw2 * phi1_pw2 * p1_pw2
                     + phi2_pw2 * p2_pw2 * d12_pw2 * b_pw2;
-    std::vector<double> factors {factor4, factor3, factor2, factor1, factor0};
 
+    std::vector<double> factors {factor4, factor3, factor2, factor1, factor0};
     // Solve the fourth order equation
     roots4thOrder(factors);
-
+std::cout << "4 potential roots: " << roots_[0] << std::endl << roots_[1] << std::endl << roots_[2] << std::endl << roots_[3] << std::endl;
     // Backsubstitute solutions in other equations
     for (int i = 0; i < 4; ++i) {
         double cotAlpha = (-phi1 * p1 / phi2 - roots_[i].real() * p2 + d12 * b) / (-phi1 * roots_[i].real() * p2 / phi2 + p1 - d12);
@@ -239,7 +243,7 @@ void Solver::roots4thOrder(const std::vector<double> &factors) {
 
     const double P = -alpha_pw2 / 12 - gamma;
     const double Q = -alpha_pw3 / 108 + alpha * gamma / 3 - std::pow(beta, 2) / 8;
-    const double R = -Q / 2 + std::sqrt(pow(Q, 2) / 4 + std::pow(P, 3) / 27);
+    const double R = -Q / 2 + std::sqrt(std::pow(Q, 2) / 4 + std::pow(P, 3) / 27);
     const double U = std::cbrt(R);
 
     const double y = (U == 0) ? (-5 * alpha / 6 - std::cbrt(Q)) : (-5 * alpha / 6 - P / (3 * U) + U);
@@ -251,18 +255,56 @@ void Solver::roots4thOrder(const std::vector<double> &factors) {
     roots_[3] = -B / (4 * A) + 0.5 * (-w - std::sqrt(std::complex<double>(-(3 * alpha + 2 * y - 2 * beta / w))));
 }
 
-bool Solver::uniqueSolution(const Eigen::Matrix<double, 3, 16> &poses, Eigen::Matrix3d &R_tmp, Eigen::Vector3d &T_tmp, const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::internal::AllRange<4>, std::vector<int>> &worldPoints, const Eigen::Matrix3Xd &points2D) {
+bool Solver::uniqueSolution(const Eigen::Matrix<double, 3, 16> &poses, Eigen::Matrix3d &R_est, Eigen::Vector3d &T_est, const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::internal::AllRange<4>, std::vector<int>> &worldPoints, const Eigen::Matrix3Xd &points2D) {
     try
     {
+        std::vector<Eigen::Matrix3d> validR;
+        std::vector<Eigen::Vector3d> validT;
         for (int i = 0; i < int(poses.cols() / 4); ++i) {
-            
+std::cout << "poses: " << poses << std::endl << std::endl;
+            Eigen::Matrix3d R_tmp = poses.middleCols(4 * i + 1, 3).transpose();
+std::cout << "R_tmp: " << R_tmp << "\n\n";
+            Eigen::Vector3d T_tmp = -R_tmp * poses.col(4 * i); 
+            Eigen::Matrix3d T_tmp_3;
+            T_tmp_3 << T_tmp.transpose(),
+                       T_tmp.transpose(),
+                       T_tmp.transpose();
+            Eigen::Matrix3d proj = R_tmp * worldPoints.topLeftCorner(3, 3) + T_tmp_3.transpose();
+std::cout << proj.row(2) << std::endl;
+            if (proj.row(2).minCoeff() > 0) {
+                validR.push_back(R_tmp);
+                validT.push_back(T_tmp);
+            }
+        }
+        int extrinsicIndex = -1;
+        double bestError = 99999;
+        for (int i = 0; i < validT.size(); ++i) {
+            Eigen::Vector3d proj = validR[i] * worldPoints.topRightCorner(3, 1) + validT[i];
+            proj /= proj[2];
+            proj = proj.topRows(2);
+            double curError = (proj - points2D.topRows(2)).norm();
+std::cout << curError << std::endl;
+            if (curError < bestError) {
+                extrinsicIndex = i;
+                bestError = curError;
+            }
+        }
+std::cout << extrinsicIndex << std::endl;
+        if (-1 == extrinsicIndex) {
+            R_est = Eigen::Matrix3d::Zero();
+            T_est = Eigen::Vector3d::Zero();
+            return false;
+        } else {
+            R_est = validR[extrinsicIndex];
+            T_est = validT[extrinsicIndex];
+            return true;
         }
     }
     catch(const std::exception& e)
     {
+        R_est = Eigen::Matrix3d::Zero();
+        T_est = Eigen::Vector3d::Zero();
         std::cerr << e.what() << '\n';
-        R_tmp = Eigen::Matrix3d::Zero();
-        T_tmp = Eigen::Vector3d::Zero();
         return false;
     }
     
