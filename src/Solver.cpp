@@ -11,7 +11,6 @@ namespace fast_SVO
     
 Solver::Solver(const size_t numIter, const float epsilon, const Eigen::Matrix3d K) : numIter_{numIter}, epsilon_{epsilon}, K_{K} {
     invK_ = K.inverse();
-    roots_ = std::vector<std::complex<double>>(4);
 }
 
 void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matrix<double, 4, Eigen::Dynamic> &points3D, const Eigen::Matrix<double, 3, Eigen::Dynamic> &points2d) {
@@ -135,6 +134,7 @@ void Solver::p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::interna
     double b = 1 / (1 - std::pow(cosBeta, 2)) - 1;
     b = cosBeta < 0 ? -sqrt(b) : sqrt(b);
 
+
     // Define auxiliary variables that are helpful to type less
     double phi1_pw2 = std::pow(phi1, 2);
     double phi2_pw2 = std::pow(phi2, 2);
@@ -184,17 +184,19 @@ void Solver::p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::interna
     roots4thOrder(factors);
 
     // Backsubstitute solutions in other equations
-    for (int i = 0; i < 4; ++i) {
-        double cotAlpha = (-phi1 * p1 / phi2 - roots_[i].real() * p2 + d12 * b) / (-phi1 * roots_[i].real() * p2 / phi2 + p1 - d12);
-        double cosTheta = roots_[i].real();
+    for (int i = 0; i < roots_.size(); ++i) {
+        double cotAlpha = (-phi1 * p1 / phi2 - roots_[i] * p2 + d12 * b) / (-phi1 * roots_[i] * p2 / phi2 + p1 - d12);
+        double cosTheta = roots_[i];
             
-        double sinTheta = std::sqrt(1 - pow(roots_[i].real(), 2));
+        double sinTheta = std::sqrt(1 - pow(roots_[i], 2));
         double sinAlpha = std::sqrt(1 / (pow(cotAlpha, 2) + 1));
         double cosAlpha = std::sqrt(1 - pow(sinAlpha, 2));
 
         if (cotAlpha < 0) {
             cosAlpha = -cosAlpha;
         }
+
+//std::cout << sinTheta << ", " << cosTheta << ", " << sinAlpha << ", " << cosAlpha << std::endl << std::endl;
 
         // Build C_nu
         Eigen::Vector3d C_nu;
@@ -228,7 +230,13 @@ void Solver::roots4thOrder(const std::vector<double> &factors) {
                      0, 0, 1, -factors[3]/factors[4];
     Eigen::Matrix<std::complex<double>, 4, 1> matrixEigen;
     matrixEigen = matrixAdjoint.eigenvalues();
-    std::cout << "matrixEigen: " << std::endl << matrixEigen << std::endl;
+//std::cout << matrixEigen << std::endl;
+    std::vector<double> allRealRoots;
+    for(int i = 0; i < 4; ++i) {
+        if (matrixEigen[i].imag() == 0)
+            allRealRoots.push_back(matrixEigen[i].real());
+    }
+    roots_ = std::move(allRealRoots);
 }
 
 bool Solver::uniqueSolution(const Eigen::Matrix<double, 3, 16> &poses, Eigen::Matrix3d &R_est, Eigen::Vector3d &T_est, const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::internal::AllRange<4>, std::vector<int>> &worldPoints, const Eigen::Matrix3Xd &points2D) {

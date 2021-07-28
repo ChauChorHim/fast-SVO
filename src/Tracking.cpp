@@ -155,15 +155,16 @@ void Tracking::matchStereoFeaturesNaive() {
         size_t lastRowNum = points3d_.rows() - 1;
         points3d_.array().rowwise() /= points3d_.row(lastRowNum).array();
     }
+
 }
 
-void Tracking::showMatches(const cv::Mat &imRectLeft, const cv::Mat &imRectRight) {
+void Tracking::showMatches(const cv::Mat &image1, const cv::Mat &image2) {
     if (matches_.size() < 4) { // cv::drawMatches can't receive empty input array
         std::cout << "Dump this frame. There are only " << matches_.size() << " matches" << std::endl;
         return;
     }
     cv::Mat imMatches;
-    cv::drawMatches(imRectLeft, leftKeypoints_, imRectRight, rightKeypoints_, matches_, imMatches);
+    cv::drawMatches(image1, leftKeypoints_, image2, rightKeypoints_, matches_, imMatches);
     cv::namedWindow("Stereo matching features", cv::WINDOW_AUTOSIZE); // create window
     cv::imshow("Stereo matching features", imMatches); // show the image
     cv::waitKey(1);
@@ -208,6 +209,7 @@ void Tracking::matchFeaturesNaive() {
                 j++;
             }
         }
+        matches_ = std::move(goodMatches);
         leftKeypoints_ = std::move(goodLeftKeypoints);
         leftDescriptors_ = std::move(goodLeftDescriptors);
         prePoints3d_ = std::move(prePoints3d);

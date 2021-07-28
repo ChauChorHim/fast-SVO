@@ -34,7 +34,7 @@ private:
     const float epsilon_;
     const Eigen::Matrix3d K_;
     Eigen::Matrix3d invK_;
-    std::vector<std::complex<double>> roots_;
+    std::vector<double> roots_;
 };
     
 } // namespace fast_SVO

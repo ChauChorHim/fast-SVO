@@ -26,7 +26,7 @@ public:
 
     void matchStereoFeaturesNaive();
 
-    void showMatches(const cv::Mat &imRectLeft, const cv::Mat &imRectRight);
+    void showMatches(const cv::Mat &image1, const cv::Mat &image2);
 
     void matchFeaturesNaive();
 
