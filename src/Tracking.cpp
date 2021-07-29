@@ -13,7 +13,7 @@
 namespace fast_SVO
 {
 
-Tracking::Tracking(System* system, const std::string &strSettingFile) : system_(system) {
+Tracking::Tracking(const std::string &strSettingFile) {
     state = NOT_INITIALIZED;
     cv::FileStorage fSettings(strSettingFile, cv::FileStorage::READ);
     float fx = fSettings["Camera.fx"];
@@ -95,15 +95,18 @@ Tracking::Tracking(System* system, const std::string &strSettingFile) : system_(
     p3pSolver_ = new Solver(numIter, epsilon, K_);
 }
 
-
-void Tracking::updateImagesFeatures(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp) {
-    ORBextractorLeft_->detectAndCompute(imRectLeft, cv::noArray(), leftKeypoints_, leftDescriptors_);    
-    ORBextractorRight_->detectAndCompute(imRectRight, cv::noArray(), rightKeypoints_, rightDescriptors_);    
+void Tracking::updateImagesFeatures(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp, 
+                                    std::vector<cv::KeyPoint> &leftKeypoints, std::vector<cv::KeyPoint> &rightKeypoints, 
+                                    cv::Mat &leftDescriptors, cv::Mat &rightDescriptors) {
+    ORBextractorLeft_->detectAndCompute(imRectLeft, cv::noArray(), leftKeypoints, leftDescriptors);    
+    ORBextractorRight_->detectAndCompute(imRectRight, cv::noArray(), rightKeypoints, rightDescriptors);    
 }
 
-void Tracking::matchStereoFeaturesNaive() {
+void Tracking::matchStereoFeaturesNaive(std::vector<cv::KeyPoint> &leftKeypoints, std::vector<cv::KeyPoint> &rightKeypoints,
+                                        cv::Mat &leftDescriptors, cv::Mat &rightDescriptors, std::vector<cv::DMatch> &matches,
+                                        Eigen::Matrix<double, 4, Eigen::Dynamic> &points3d) {
     std::vector<std::vector<cv::DMatch>> knnMatches;
-    matcher_->knnMatch(leftDescriptors_, rightDescriptors_, knnMatches, 2);
+    matcher_->knnMatch(leftDescriptors, rightDescriptors, knnMatches, 2);
 
     std::vector<cv::Point2f> leftKeypointsCoor, rightKeypointsCoor;
     cv::Mat goodLeftDescriptors, goodRightDescriptors;
@@ -117,68 +120,70 @@ void Tracking::matchStereoFeaturesNaive() {
     {
         size_t leftIndex = knnMatches[i][0].queryIdx;
         size_t rightIndex = knnMatches[i][0].trainIdx;
-        if (knnMatches[i][0].distance < ratio_thresh * knnMatches[i][1].distance && abs(leftKeypoints_[leftIndex].pt.y - rightKeypoints_[rightIndex].pt.y) < 0.1) {
+        if (knnMatches[i][0].distance < ratio_thresh * knnMatches[i][1].distance && abs(leftKeypoints[leftIndex].pt.y - rightKeypoints[rightIndex].pt.y) < 0.1) {
             knnMatches[i][0].queryIdx = j;
             knnMatches[i][0].trainIdx = j;
             goodMatches.push_back(knnMatches[i][0]);
 
-            leftKeypointsCoor.push_back(leftKeypoints_[leftIndex].pt); // leftKeypointsCoor and rightKeypointsCoor are used in cv::triangulatePoints()
-            rightKeypointsCoor.push_back(rightKeypoints_[rightIndex].pt);
+            leftKeypointsCoor.push_back(leftKeypoints[leftIndex].pt); // leftKeypointsCoor and rightKeypointsCoor are used in cv::triangulatePoints()
+            rightKeypointsCoor.push_back(rightKeypoints[rightIndex].pt);
 
-            goodLeftKeypoints.push_back(leftKeypoints_[leftIndex]);
-            goodRightKeypoints.push_back(rightKeypoints_[rightIndex]);
+            goodLeftKeypoints.push_back(leftKeypoints[leftIndex]);
+            goodRightKeypoints.push_back(rightKeypoints[rightIndex]);
 
-            goodLeftDescriptors.push_back(leftDescriptors_.row(leftIndex));
-            goodRightDescriptors.push_back(rightDescriptors_.row(rightIndex));
+            goodLeftDescriptors.push_back(leftDescriptors.row(leftIndex));
+            goodRightDescriptors.push_back(rightDescriptors.row(rightIndex));
             j++;
         }
     }
 
     //-- Move the goodMatches to matches_
-    matches_ = std::move(goodMatches);
+    matches = std::move(goodMatches);
 
-    //-- Move the goodLeftKeypoints and goodRightKeypoints to leftKeypoints_ and rightKeypoints_
-    leftKeypoints_ = std::move(goodLeftKeypoints);
-    rightKeypoints_ = std::move(goodRightKeypoints);
+    //-- Move the goodLeftKeypoints to leftKeypoints_
+    leftKeypoints = std::move(goodLeftKeypoints);
+    rightKeypoints = std::move(goodRightKeypoints);
 
-    //-- Move the goodLeftDescriptors and goodRightDescriptors to leftDescriptors_ and rightDescriptors_
-    leftDescriptors_ = std::move(goodLeftDescriptors);
-    rightDescriptors_ = std::move(goodRightDescriptors);
+    //-- Move the goodLeftDescriptors to leftDescriptors_
+    leftDescriptors = std::move(goodLeftDescriptors);
 
     //-- Triangulate 3D points with qualified matches
     if (leftKeypointsCoor.size() >= 4) { // P3P needs at least 4 points
         cv::Mat pnts3D(4, leftKeypointsCoor.size(), CV_64F);
         cv::triangulatePoints(P1_, P2_, leftKeypointsCoor, rightKeypointsCoor, pnts3D);
         size_t colsNum = pnts3D.cols;
-        points3d_.conservativeResize(Eigen::NoChange, colsNum);
-        cv::cv2eigen(pnts3D, points3d_);
-        size_t lastRowNum = points3d_.rows() - 1;
-        points3d_.array().rowwise() /= points3d_.row(lastRowNum).array();
+        points3d.conservativeResize(Eigen::NoChange, colsNum);
+        cv::cv2eigen(pnts3D, points3d);
+        size_t lastRowNum = points3d.rows() - 1;
+        points3d.array().rowwise() /= points3d.row(lastRowNum).array();
     }
 
 }
 
-void Tracking::showMatches(const cv::Mat &image1, const cv::Mat &image2) {
-    if (matches_.size() < 4) { // cv::drawMatches can't receive empty input array
-        std::cout << "Dump this frame. There are only " << matches_.size() << " matches" << std::endl;
+void Tracking::showMatches(const cv::Mat &image1, const cv::Mat &image2, 
+                           const std::vector<cv::KeyPoint> &keypoints1, std::vector<cv::KeyPoint> &keypoints2,
+                           const std::vector<cv::DMatch> &matches) {
+    if (matches.size() < 4) { // cv::drawMatches can't receive empty input array
+        std::cout << "Dump this frame. There are only " << matches.size() << " matches" << std::endl;
         return;
     }
     cv::Mat imMatches;
-    cv::drawMatches(image1, leftKeypoints_, image2, rightKeypoints_, matches_, imMatches);
+    cv::drawMatches(image1, keypoints1, image2, keypoints2, matches, imMatches);
     cv::namedWindow("Stereo matching features", cv::WINDOW_AUTOSIZE); // create window
     cv::imshow("Stereo matching features", imMatches); // show the image
     cv::waitKey(1);
 }
 
-void Tracking::matchFeaturesNaive() {
+void Tracking::matchFeaturesNaive(std::vector<cv::KeyPoint> &leftKeypoints, cv::Mat &leftDescriptors, std::vector<cv::DMatch> &matches, 
+                                  Eigen::Matrix<double, 4, Eigen::Dynamic> &points3d,
+                                  Eigen::Matrix<double, 3, Eigen::Dynamic> &points2d) {
     if (state == OK) {
         std::vector<std::vector<cv::DMatch>> knnMatches;
-        matcher_->knnMatch(leftDescriptors_, preLeftDescriptors_, knnMatches, 2);
+        matcher_->knnMatch(leftDescriptors, preLeftDescriptors_, knnMatches, 2);
         std::vector<cv::DMatch> goodMatches;
         std::vector<cv::KeyPoint> goodLeftKeypoints;
         cv::Mat goodLeftDescriptors;
         Eigen::Matrix<double, 4, Eigen::Dynamic> prePoints3d;
-        Eigen::Matrix<double, 3, Eigen::Dynamic> points2d;
         
         //-- Filter matches using the Lowe's ratio test
         const float ratio_thresh = 0.8f;
@@ -193,46 +198,46 @@ void Tracking::matchFeaturesNaive() {
                 knnMatches[i][0].trainIdx = j;
                 goodMatches.push_back(knnMatches[i][0]);
 
-                goodLeftKeypoints.push_back(leftKeypoints_[curIndex]);
-                goodLeftDescriptors.push_back(leftDescriptors_.row(curIndex));
+                goodLeftKeypoints.push_back(leftKeypoints[curIndex]);
+                goodLeftDescriptors.push_back(leftDescriptors.row(curIndex));
 
                 const int curCols3D = prePoints3d.cols();
                 prePoints3d.conservativeResize(Eigen::NoChange, curCols3D + 1);
                 prePoints3d.col(curCols3D) = prePoints3d_.col(preIndex);
 
+                points2d.conservativeResize(Eigen::NoChange, j + 1);
                 Eigen::Vector3d point2d;
-                const int curCols2D = points2d.cols();
-                point2d << leftKeypoints_[curIndex].pt.x, leftKeypoints_[curIndex].pt.y, 1;
-                points2d.conservativeResize(Eigen::NoChange, curCols2D + 1);
+                point2d << leftKeypoints[curIndex].pt.x, leftKeypoints[curIndex].pt.y, 1;
                 points2d.col(curCols3D) = point2d;
 
                 j++;
             }
         }
-        matches_ = std::move(goodMatches);
-        leftKeypoints_ = std::move(goodLeftKeypoints);
-        leftDescriptors_ = std::move(goodLeftDescriptors);
+        matches = std::move(goodMatches);
+        leftKeypoints = std::move(goodLeftKeypoints);
+        leftDescriptors = std::move(goodLeftDescriptors);
         prePoints3d_ = std::move(prePoints3d);
-        points2d_ = std::move(points2d);
-        
+
     } else if (state == NOT_INITIALIZED) {
-        prePoints3d_ = points3d_;
-        preLeftKeypoints_ = leftKeypoints_;
-        preLeftDescriptors_ = leftDescriptors_;
+        prePoints3d_ = points3d;
+        preLeftKeypoints_ = leftKeypoints;
+        preLeftDescriptors_ = leftDescriptors;
         state = OK;
     }
 
 }
 
-void Tracking::getTranform(Eigen::Matrix3d &R, Eigen::Vector3d &T) {
-    if (points2d_.cols()) {
-        p3pSolver_->p3pRansac(R, T, prePoints3d_, points2d_);
+void Tracking::getTranform(Eigen::Matrix3d &R, Eigen::Vector3d &T, 
+                           const std::vector<cv::KeyPoint> &leftKeypoints, const cv::Mat &leftDescriptors,
+                           const Eigen::Matrix3Xd &points2d, const Eigen::Matrix4Xd &points3d) {
+    if (points2d.cols()) {
+        //p3pSolver_->p3pRansac(R, T, prePoints3d_, points2d);
     }
+
     //-- update the 3D-2D features
-    Eigen::Matrix4Xd prePoints3d = points3d_;
-    prePoints3d_ = std::move(prePoints3d);
-    preLeftKeypoints_ = leftKeypoints_;
-    preLeftDescriptors_ = leftDescriptors_;
+    prePoints3d_ = std::move(points3d);
+    preLeftKeypoints_ = std::move(leftKeypoints);
+    preLeftDescriptors_ = std::move(leftDescriptors);
 }
 
 }

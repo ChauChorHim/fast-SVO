@@ -15,22 +15,30 @@
 namespace fast_SVO
 {
 
-class System;
-
 class Tracking {
 
 public:
-    Tracking(System* system, const std::string &strSettingFile);
+    Tracking(const std::string &strSettingFile);
 
-    void updateImagesFeatures(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp);
+    void updateImagesFeatures(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp, 
+                              std::vector<cv::KeyPoint> &leftKeypoints, std::vector<cv::KeyPoint> &rightKeypoints,
+                              cv::Mat &leftDescriptors, cv::Mat &rightDescriptors);
 
-    void matchStereoFeaturesNaive();
+    void matchStereoFeaturesNaive(std::vector<cv::KeyPoint> &leftKeypoints, std::vector<cv::KeyPoint> &rightKeypoints,
+                                  cv::Mat &leftDescriptors, cv::Mat &rightDescriptors, std::vector<cv::DMatch> &matches,
+                                  Eigen::Matrix<double, 4, Eigen::Dynamic> &points3d);
 
-    void showMatches(const cv::Mat &image1, const cv::Mat &image2);
+    void showMatches(const cv::Mat &image1, const cv::Mat &image2,
+                     const std::vector<cv::KeyPoint> &keypoints1, std::vector<cv::KeyPoint> &keypoints2,
+                     const std::vector<cv::DMatch> &matches);
 
-    void matchFeaturesNaive();
+    void matchFeaturesNaive(std::vector<cv::KeyPoint> &leftKeypoints, cv::Mat &leftDescriptors, std::vector<cv::DMatch> &matches,
+                            Eigen::Matrix<double, 4, Eigen::Dynamic> &points3d,
+                            Eigen::Matrix<double, 3, Eigen::Dynamic> &points2d);
 
-    void getTranform(Eigen::Matrix3d &R, Eigen::Vector3d &T);
+    void getTranform(Eigen::Matrix3d &R, Eigen::Vector3d &T, 
+                     const std::vector<cv::KeyPoint> &leftKeypoints, const cv::Mat &leftDescriptors,
+                     const Eigen::Matrix3Xd &points2d, const Eigen::Matrix4Xd &points3d);
 
     enum trackingState {
         NOT_INITIALIZED=1,
@@ -54,29 +62,22 @@ private:
     // Color order (true RGB, false BGR, ignored if grayscale)
     bool rgbOrder_;
 
-    // System pointer
-    System* system_;
-
     // ORB features extractor
     cv::Ptr<cv::ORB> ORBextractorLeft_, ORBextractorRight_;
 
     // features keypoints
-    std::vector<cv::KeyPoint> leftKeypoints_, rightKeypoints_, preLeftKeypoints_;
+    std::vector<cv::KeyPoint> preLeftKeypoints_;
 
     // features descriptors
-    cv::Mat leftDescriptors_, rightDescriptors_, preLeftDescriptors_;
+    cv::Mat preLeftDescriptors_;
 
     // features matcher
     cv::Ptr<cv::DescriptorMatcher> matcher_;
 
-    // features matches, used for visualizing the matching
-    std::vector<cv::DMatch> matches_;
-
     // triangulated 3D points
-    Eigen::Matrix<double, 4, Eigen::Dynamic> points3d_, prePoints3d_;
+    Eigen::Matrix<double, 4, Eigen::Dynamic> prePoints3d_;
 
-    // 2D points in left camera image frame
-    Eigen::Matrix<double, 3, Eigen::Dynamic> points2d_;
+    
 
     // p3p solver
     Solver* p3pSolver_;

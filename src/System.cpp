@@ -23,7 +23,7 @@ System::System(const Dataset *dataset, const std::string &strSettingFile, const 
         exit(-1);
     }
 
-    tracker_ = new Tracking(this, strSettingFile);
+    tracker_ = new Tracking(strSettingFile);
 }
 
 /**
@@ -43,11 +43,21 @@ double System::updateImages(const int i) {
 }
 
 void System::trackStereo() {
-    tracker_->updateImagesFeatures(curImLeft_, curImRight_, curTimestamp_);
-    tracker_->matchStereoFeaturesNaive();
-    tracker_->showMatches(curImLeft_, curImRight_);
-    tracker_->matchFeaturesNaive();
-    tracker_->getTranform(R_, T_);
+    std::vector<cv::KeyPoint> leftKeypoints;
+    std::vector<cv::KeyPoint> rightKeypoints;
+    cv::Mat leftDescriptors;
+    cv::Mat rightDescriptors;
+    tracker_->updateImagesFeatures(curImLeft_, curImRight_, curTimestamp_, leftKeypoints, rightKeypoints, leftDescriptors, rightDescriptors);
+
+    std::vector<cv::DMatch> matches;
+    Eigen::Matrix<double, 4, Eigen::Dynamic> points3d;
+    tracker_->matchStereoFeaturesNaive(leftKeypoints, rightKeypoints, leftDescriptors, rightDescriptors, matches, points3d);
+    tracker_->showMatches(curImLeft_, curImRight_, leftKeypoints, rightKeypoints, matches);
+
+    Eigen::Matrix<double, 3, Eigen::Dynamic> points2d;
+    tracker_->matchFeaturesNaive(leftKeypoints, leftDescriptors, matches, points3d, points2d);
+
+    tracker_->getTranform(R_, T_, leftKeypoints, leftDescriptors, points2d, points3d);
     combineTransform();
 }
 
