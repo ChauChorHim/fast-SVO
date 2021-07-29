@@ -65,19 +65,17 @@ private:
     // ORB features extractor
     cv::Ptr<cv::ORB> ORBextractorLeft_, ORBextractorRight_;
 
-    // features keypoints
+    // previous features keypoints
     std::vector<cv::KeyPoint> preLeftKeypoints_;
 
-    // features descriptors
+    // previous features descriptors
     cv::Mat preLeftDescriptors_;
 
     // features matcher
     cv::Ptr<cv::DescriptorMatcher> matcher_;
 
-    // triangulated 3D points
+    // previous triangulated 3D points
     Eigen::Matrix<double, 4, Eigen::Dynamic> prePoints3d_;
-
-    
 
     // p3p solver
     Solver* p3pSolver_;

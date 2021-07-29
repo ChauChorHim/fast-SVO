@@ -86,7 +86,7 @@ Tracking::Tracking(const std::string &strSettingFile) {
     const float confidence = fSettings["RANSAC.confidence"];
     const float probability = fSettings["RANSAC.probability"];
     const size_t numIter = ceil(log(1. - confidence) / log(1. - pow(probability, 4)));
-    const float epsilon = K_(0, 2) * 0.02;
+    const float epsilon = K_(0, 2) * 0.05;
     std::cout << std::endl  << "RANSAC Parameters: " << std::endl;
     std::cout << "- RANSAC confidence: " << confidence << std::endl;
     std::cout << "- RANSAC probability: " << probability << std::endl;
@@ -231,7 +231,7 @@ void Tracking::getTranform(Eigen::Matrix3d &R, Eigen::Vector3d &T,
                            const std::vector<cv::KeyPoint> &leftKeypoints, const cv::Mat &leftDescriptors,
                            const Eigen::Matrix3Xd &points2d, const Eigen::Matrix4Xd &points3d) {
     if (points2d.cols()) {
-        //p3pSolver_->p3pRansac(R, T, prePoints3d_, points2d);
+        p3pSolver_->p3pRansac(R, T, prePoints3d_, points2d);
     }
 
     //-- update the 3D-2D features

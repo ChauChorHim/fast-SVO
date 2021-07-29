@@ -13,20 +13,19 @@ Solver::Solver(const size_t numIter, const float epsilon, const Eigen::Matrix3d 
     invK_ = K.inverse();
 }
 
-void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matrix<double, 4, Eigen::Dynamic> &points3D, const Eigen::Matrix<double, 3, Eigen::Dynamic> &points2d) {
-    // Get 2D points in camera frame
-    Eigen::Matrix<double, 3, Eigen::Dynamic> points2D;
-    points2D = invK_ * points2d;
-    size_t lastRowNum = points2D.rows() - 1; // May delete?
-    points2D.array().rowwise() /= points2D.row(lastRowNum).array(); // May delete?
+void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matrix<double, 4, Eigen::Dynamic> &points3d, const Eigen::Matrix<double, 3, Eigen::Dynamic> &points2d) {
+    // Get 2D vectors in camera frame
+    Eigen::Matrix<double, 3, Eigen::Dynamic> vectors2d;
+    vectors2d = invK_ * points2d;
+    size_t lastRowNum = vectors2d.rows() - 1; // May delete?
+    vectors2d.array().rowwise() /= vectors2d.row(lastRowNum).array(); // May delete?
 
-    Eigen::Matrix<double, 3, Eigen::Dynamic> points2D_norm = points2D;
-    // Normalize the 2D points
-    for (int i = 0; i < points2D_norm.cols(); ++i)
-        points2D_norm.col(i).normalize();
+    // Normalize the 2D vectors
+    for (int i = 0; i < vectors2d.cols(); ++i)
+        vectors2d.col(i).normalize();
 
     // Random machine setup
-    long int numPoints{points3D.cols()};
+    long int numPoints{points3d.cols()};
     std::random_device randomDevice;
     std::mt19937 eng(randomDevice());
     std::uniform_int_distribution<std::mt19937::result_type> randomDistribution(0, numPoints);
@@ -39,22 +38,54 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matr
     Eigen::Matrix3d R_est;
     Eigen::Vector3d T_est;
 
+    // Best inliers number
+    size_t bestInliersNum = 0;
+
+    // Best mean error
+    double meanError = 100000;
     for (size_t i = 0; i < numIter_; ++i) {
         // Get 4 random points for p3p 
         for (size_t i = 0; i < randomNumbers.size(); ++i) {
             randomNumbers[i] = randomDistribution(eng);
         }   
-        const auto worldPoints = points3D(Eigen::all, randomNumbers);
-        const auto imageVectors = points2D_norm(Eigen::all, randomNumbers);
+        const Eigen::Matrix4d worldPoints = points3d(Eigen::all, randomNumbers);
+        const Eigen::Matrix<double, 3, 4> imageVectors = vectors2d(Eigen::all, randomNumbers);
 
+        // get potential poses (R and T)
         p3p(worldPoints, imageVectors, poses);
         
-        //bool validEstimate = uniqueSolution(poses, R_est, T_est, worldPoints, points2D);
+        // disambiguate the potential poses and get the best R_est and T_est
+        bool validEstimate = uniqueSolution(poses, R_est, T_est, worldPoints, imageVectors);
+
+        if(validEstimate) {
+            // Construct the estimated projection matrix P_est
+            Eigen::Matrix<double, 3, 4> P_est;
+            P_est << R_est, T_est;
+            // Reproject 3D points to the image plane
+            Eigen::Matrix3Xd points2d_est = K_ * P_est * points3d;
+            points2d_est.array().rowwise() /= points2d_est.row(2).array();
+            // Check consensus
+            size_t inliersNum = 0;
+            double meanError_tmp = 0;
+
+            for (int i = 0; i < points2d.cols(); ++i) {
+                meanError_tmp += (points2d_est.col(i)-points2d.col(i)).norm();
+                if ((points2d.col(i) - points2d_est.col(i)).norm() < epsilon_)
+                    ++inliersNum;
+            }
+            if (inliersNum > bestInliersNum) {
+                R = R_est;
+                T = T_est;
+                bestInliersNum = inliersNum;
+                meanError = meanError_tmp / points2d.cols(); 
+            }
+        }
     }
+    std::cout << "best mean error: " << meanError << ", bestInliersum = " << bestInliersNum << ", points2d.cols() = " << points2d.cols() << std::endl;
 }
 
-void Solver::p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::internal::AllRange<4>, std::vector<int>> &worldPoints, 
-                 const Eigen::IndexedView<Eigen::Matrix3Xd, Eigen::internal::AllRange<3>, std::vector<int>> &imageVectors,
+void Solver::p3p(const Eigen::Matrix4d &worldPoints, 
+                 const Eigen::Matrix<double, 3, 4> &imageVectors,
                  Eigen::Matrix<double, 3, 16> &poses) {
     // Derive world points
     Eigen::Vector3d worldPoint1 = worldPoints(Eigen::all, 0).topRows(3);
@@ -179,7 +210,7 @@ void Solver::p3p(const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::interna
                     + p2_pw2 * phi1_pw2 * p1_pw2
                     + phi2_pw2 * p2_pw2 * d12_pw2 * b_pw2;
 
-    std::vector<double> factors {factor4, factor3, factor2, factor1, factor0};
+    std::vector<double> factors {factor0, factor1, factor2, factor3, factor4};
     // Solve the fourth order equation
     roots4thOrder(factors);
 
@@ -239,22 +270,23 @@ void Solver::roots4thOrder(const std::vector<double> &factors) {
     roots_ = std::move(allRealRoots);
 }
 
-bool Solver::uniqueSolution(const Eigen::Matrix<double, 3, 16> &poses, Eigen::Matrix3d &R_est, Eigen::Vector3d &T_est, const Eigen::IndexedView<const Eigen::Matrix4Xd, Eigen::internal::AllRange<4>, std::vector<int>> &worldPoints, const Eigen::Matrix3Xd &points2D) {
+bool Solver::uniqueSolution(const Eigen::Matrix<double, 3, 16> &poses, Eigen::Matrix3d &R_est, Eigen::Vector3d &T_est, 
+                            const Eigen::Matrix4d &worldPoints, const Eigen::Matrix<double, 3, 4> &imageVectors) {
     try
     {
         std::vector<Eigen::Matrix3d> validR;
         std::vector<Eigen::Vector3d> validT;
         for (int i = 0; i < int(poses.cols() / 4); ++i) {
-std::cout << "poses: " << poses << std::endl << std::endl;
+//std::cout << "poses: " << poses << std::endl << std::endl;
             Eigen::Matrix3d R_tmp = poses.middleCols(4 * i + 1, 3).transpose();
-std::cout << "R_tmp: " << R_tmp << "\n\n";
+//std::cout << "R_tmp: " << R_tmp << "\n\n";
             Eigen::Vector3d T_tmp = -R_tmp * poses.col(4 * i); 
             Eigen::Matrix3d T_tmp_3;
             T_tmp_3 << T_tmp.transpose(),
                        T_tmp.transpose(),
                        T_tmp.transpose();
             Eigen::Matrix3d proj = R_tmp * worldPoints.topLeftCorner(3, 3) + T_tmp_3.transpose();
-std::cout << proj.row(2) << std::endl;
+//std::cout << proj.row(2) << std::endl;
             if (proj.row(2).minCoeff() > 0) {
                 validR.push_back(R_tmp);
                 validT.push_back(T_tmp);
@@ -265,15 +297,14 @@ std::cout << proj.row(2) << std::endl;
         for (int i = 0; i < validT.size(); ++i) {
             Eigen::Vector3d proj = validR[i] * worldPoints.topRightCorner(3, 1) + validT[i];
             proj /= proj[2];
-            proj = proj.topRows(2);
-            double curError = (proj - points2D.topRows(2)).norm();
-std::cout << curError << std::endl;
+            double curError = (proj.topRows(2) - imageVectors.topRightCorner(2, 1)).norm();
+//std::cout << curError << std::endl;
             if (curError < bestError) {
                 extrinsicIndex = i;
                 bestError = curError;
             }
         }
-std::cout << extrinsicIndex << std::endl;
+//std::cout << extrinsicIndex << std::endl;
         if (-1 == extrinsicIndex) {
             R_est = Eigen::Matrix3d::Zero();
             T_est = Eigen::Vector3d::Zero();
