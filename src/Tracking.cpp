@@ -222,8 +222,8 @@ void Tracking::matchFeaturesNaive(std::vector<cv::KeyPoint> &leftKeypoints, cv::
             }
         }
         matches = std::move(goodMatches);
-        leftKeypoints = std::move(goodLeftKeypoints);
-        leftDescriptors = std::move(goodLeftDescriptors);
+        //leftKeypoints = std::move(goodLeftKeypoints);  // DAMN!!!
+        //leftDescriptors = std::move(goodLeftDescriptors); // WHAT A DAMN BUG!!
         prePoints3d_ = std::move(prePoints3d);
 
     } else if (state_ == NOT_INITIALIZED) {

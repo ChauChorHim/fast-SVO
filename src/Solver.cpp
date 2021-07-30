@@ -8,12 +8,12 @@
 
 namespace fast_SVO
 {
-    
 Solver::Solver(const size_t numIter, const float epsilon, const Eigen::Matrix3d K) : numIter_{numIter}, epsilon_{epsilon}, K_{K} {
     invK_ = K.inverse();
 }
 
-void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matrix<double, 4, Eigen::Dynamic> &points3d, const Eigen::Matrix<double, 3, Eigen::Dynamic> &points2d) {
+void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, 
+                       const Eigen::Matrix4Xd &prePoints3d, const Eigen::Matrix3Xd &points2d) {
     // Get 2D vectors in camera frame
     Eigen::Matrix<double, 3, Eigen::Dynamic> vectors2d;
     vectors2d = invK_ * points2d;
@@ -25,7 +25,7 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matr
         vectors2d.col(i).normalize();
 
     // Random machine setup
-    long int numPoints{points3d.cols()};
+    long int numPoints{prePoints3d.cols()};
     std::random_device randomDevice;
     std::mt19937 eng(randomDevice());
     std::uniform_int_distribution<std::mt19937::result_type> randomDistribution(0, numPoints);
@@ -43,12 +43,13 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matr
 
     // Best mean error
     double meanError = 99999;
+
     for (size_t i = 0; i < numIter_; ++i) {
         // Get 4 random points for p3p 
         for (size_t i = 0; i < randomNumbers.size(); ++i) {
             randomNumbers[i] = randomDistribution(eng);
         }   
-        const Eigen::Matrix4d worldPoints = points3d(Eigen::all, randomNumbers);
+        const Eigen::Matrix4d worldPoints = prePoints3d(Eigen::all, randomNumbers);
         const Eigen::Matrix<double, 3, 4> imageVectors = vectors2d(Eigen::all, randomNumbers);
 
         // get potential poses (R and T)
@@ -61,8 +62,9 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matr
             // Construct the estimated projection matrix P_est
             Eigen::Matrix<double, 3, 4> P_est;
             P_est << R_est, T_est;
+            P_est = K_ * P_est;
             // Reproject 3D points to the image plane
-            Eigen::Matrix3Xd points2d_est = K_ * P_est * points3d;
+            Eigen::Matrix3Xd points2d_est = P_est * prePoints3d;
             points2d_est.array().rowwise() /= points2d_est.row(2).array();
             // Check consensus
             size_t inliersNum = 0;
@@ -81,7 +83,10 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matr
             }
         }
     }
-    //std::cout << "best mean error: " << meanError << ", bestInliersum = " << bestInliersNum << ", points2d.cols() = " << points2d.cols() << std::endl;
+    Eigen::Matrix<double, 3, 4> P;
+    P << R, T;
+    std::cout << "P: \n" << P << std::endl;
+    std::cout << "best mean error: " << meanError << ", bestInliersum = " << bestInliersNum << ", points2d.cols() = " << points2d.cols() << std::endl;
 }
 
 void Solver::p3p(const Eigen::Matrix4d &worldPoints, 
@@ -323,6 +328,26 @@ bool Solver::uniqueSolution(const Eigen::Matrix<double, 3, 16> &poses, Eigen::Ma
         return false;
     }
     
+}
+
+void Solver::checkValidProj(const Eigen::Matrix3Xd &points2d, const Eigen::Matrix4Xd &points3d) {
+    if (points2d.cols()) {
+        std::cout << "num of points3d: " << points3d.cols() << ", num of points2d: " << points2d.cols() << std::endl;
+        Eigen::Matrix3Xd points2d_proj;
+        Eigen::Matrix<double, 3, 4> P1;
+        Eigen::Vector3d T1;
+        T1 << 0, 0, 1;
+        P1 << K_, T1;
+        points2d_proj = P1 * points3d;
+        points2d_proj.array().rowwise() /= points2d_proj.row(2).array();
+        double meanError = 0;
+        Eigen::Matrix3Xd points2d_err;
+        points2d_err = points2d_proj - points2d;
+        for (int i = 0; i < points2d.cols(); ++i) 
+            meanError += points2d_err.col(i).norm();
+    
+        std::cout << "meanError: " << meanError / points2d.cols() << std::endl;
+    }
 }
 
 } // namespace fast_SVO
