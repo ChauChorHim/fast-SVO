@@ -42,7 +42,7 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matr
     size_t bestInliersNum = 0;
 
     // Best mean error
-    double meanError = 100000;
+    double meanError = 99999;
     for (size_t i = 0; i < numIter_; ++i) {
         // Get 4 random points for p3p 
         for (size_t i = 0; i < randomNumbers.size(); ++i) {
@@ -81,7 +81,7 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matr
             }
         }
     }
-    std::cout << "best mean error: " << meanError << ", bestInliersum = " << bestInliersNum << ", points2d.cols() = " << points2d.cols() << std::endl;
+    //std::cout << "best mean error: " << meanError << ", bestInliersum = " << bestInliersNum << ", points2d.cols() = " << points2d.cols() << std::endl;
 }
 
 void Solver::p3p(const Eigen::Matrix4d &worldPoints, 

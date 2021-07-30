@@ -14,12 +14,12 @@ namespace fast_SVO
 {
 
 Tracking::Tracking(const std::string &strSettingFile) {
-    state = NOT_INITIALIZED;
+    state_ = NOT_INITIALIZED;
     cv::FileStorage fSettings(strSettingFile, cv::FileStorage::READ);
-    float fx = fSettings["Camera.fx"];
-    float fy = fSettings["Camera.fy"];
-    float cx = fSettings["Camera.cx"];
-    float cy = fSettings["Camera.cy"];
+    double fx = fSettings["Camera.fx"];
+    double fy = fSettings["Camera.fy"];
+    double cx = fSettings["Camera.cx"];
+    double cy = fSettings["Camera.cy"];
 
     K_ << fx, 0, cx,
           0, fy, cy,
@@ -86,7 +86,7 @@ Tracking::Tracking(const std::string &strSettingFile) {
     const float confidence = fSettings["RANSAC.confidence"];
     const float probability = fSettings["RANSAC.probability"];
     const size_t numIter = ceil(log(1. - confidence) / log(1. - pow(probability, 4)));
-    const float epsilon = K_(0, 2) * 0.05;
+    const float epsilon = K_(0, 2) * 0.02;
     std::cout << std::endl  << "RANSAC Parameters: " << std::endl;
     std::cout << "- RANSAC confidence: " << confidence << std::endl;
     std::cout << "- RANSAC probability: " << probability << std::endl;
@@ -158,6 +158,16 @@ void Tracking::matchStereoFeaturesNaive(std::vector<cv::KeyPoint> &leftKeypoints
         points3d.array().rowwise() /= points3d.row(lastRowNum).array();
     }
 
+    // Check the projection
+    //Eigen::Matrix3Xd points2d;
+    //points2d.conservativeResize(Eigen::NoChange, leftKeypoints.size());
+    //Eigen::Vector3d point2d;
+    //for (int i = 0; i < leftKeypoints.size(); ++i) {
+    //    point2d << leftKeypoints[i].pt.x, leftKeypoints[i].pt.y, 1;
+    //    points2d.col(i) = point2d; 
+    //}
+    //checkValidProj(points2d, points3d);
+
 }
 
 void Tracking::showMatches(const cv::Mat &image1, const cv::Mat &image2, 
@@ -175,9 +185,8 @@ void Tracking::showMatches(const cv::Mat &image1, const cv::Mat &image2,
 }
 
 void Tracking::matchFeaturesNaive(std::vector<cv::KeyPoint> &leftKeypoints, cv::Mat &leftDescriptors, std::vector<cv::DMatch> &matches, 
-                                  Eigen::Matrix<double, 4, Eigen::Dynamic> &points3d,
                                   Eigen::Matrix<double, 3, Eigen::Dynamic> &points2d) {
-    if (state == OK) {
+    if (state_ == OK) {
         std::vector<std::vector<cv::DMatch>> knnMatches;
         matcher_->knnMatch(leftDescriptors, preLeftDescriptors_, knnMatches, 2);
         std::vector<cv::DMatch> goodMatches;
@@ -201,14 +210,13 @@ void Tracking::matchFeaturesNaive(std::vector<cv::KeyPoint> &leftKeypoints, cv::
                 goodLeftKeypoints.push_back(leftKeypoints[curIndex]);
                 goodLeftDescriptors.push_back(leftDescriptors.row(curIndex));
 
-                const int curCols3D = prePoints3d.cols();
-                prePoints3d.conservativeResize(Eigen::NoChange, curCols3D + 1);
-                prePoints3d.col(curCols3D) = prePoints3d_.col(preIndex);
+                prePoints3d.conservativeResize(Eigen::NoChange, j + 1);
+                prePoints3d.col(j) = prePoints3d_.col(preIndex);
 
                 points2d.conservativeResize(Eigen::NoChange, j + 1);
                 Eigen::Vector3d point2d;
                 point2d << leftKeypoints[curIndex].pt.x, leftKeypoints[curIndex].pt.y, 1;
-                points2d.col(curCols3D) = point2d;
+                points2d.col(j) = point2d;
 
                 j++;
             }
@@ -218,26 +226,41 @@ void Tracking::matchFeaturesNaive(std::vector<cv::KeyPoint> &leftKeypoints, cv::
         leftDescriptors = std::move(goodLeftDescriptors);
         prePoints3d_ = std::move(prePoints3d);
 
-    } else if (state == NOT_INITIALIZED) {
-        prePoints3d_ = points3d;
-        preLeftKeypoints_ = leftKeypoints;
-        preLeftDescriptors_ = leftDescriptors;
-        state = OK;
+    } else if (state_ == NOT_INITIALIZED) {
+        state_ = OK;
     }
 
 }
 
-void Tracking::getTranform(Eigen::Matrix3d &R, Eigen::Vector3d &T, 
-                           const std::vector<cv::KeyPoint> &leftKeypoints, const cv::Mat &leftDescriptors,
-                           const Eigen::Matrix3Xd &points2d, const Eigen::Matrix4Xd &points3d) {
+void Tracking::getTranform(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matrix3Xd &points2d) {
     if (points2d.cols()) {
         p3pSolver_->p3pRansac(R, T, prePoints3d_, points2d);
     }
+}
 
+void Tracking::updatePreFeatures(std::vector<cv::KeyPoint> &leftKeypoints, cv::Mat &leftDescriptors, Eigen::Matrix4Xd &points3d) {
     //-- update the 3D-2D features
     prePoints3d_ = std::move(points3d);
     preLeftKeypoints_ = std::move(leftKeypoints);
     preLeftDescriptors_ = std::move(leftDescriptors);
+}
+
+void Tracking::checkValidProj(const Eigen::Matrix3Xd &points2d, const Eigen::Matrix4Xd &points3d) {
+    if (points2d.cols()) {
+        std::cout << "num of points3d: " << points3d.cols() << ", num of points2d: " << points2d.cols() << std::endl;
+        Eigen::Matrix3Xd points2d_proj;
+        Eigen::Matrix<double, 3, 4> P1;
+        cv::cv2eigen(P1_, P1);
+        points2d_proj = P1 * points3d;
+        points2d_proj.array().rowwise() /= points2d_proj.row(2).array();
+        double meanError = 0;
+        Eigen::Matrix3Xd points2d_err;
+        points2d_err = points2d_proj - points2d;
+        for (int i = 0; i < points2d.cols(); ++i) 
+            meanError += points2d_err.col(i).norm();
+    
+        std::cout << "meanError: " << meanError / points2d.cols() << std::endl;
+    }
 }
 
 }

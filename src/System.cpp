@@ -50,14 +50,18 @@ void System::trackStereo() {
     tracker_->updateImagesFeatures(curImLeft_, curImRight_, curTimestamp_, leftKeypoints, rightKeypoints, leftDescriptors, rightDescriptors);
 
     std::vector<cv::DMatch> matches;
-    Eigen::Matrix<double, 4, Eigen::Dynamic> points3d;
+    Eigen::Matrix4Xd points3d;
     tracker_->matchStereoFeaturesNaive(leftKeypoints, rightKeypoints, leftDescriptors, rightDescriptors, matches, points3d);
-    tracker_->showMatches(curImLeft_, curImRight_, leftKeypoints, rightKeypoints, matches);
+    //tracker_->showMatches(curImLeft_, curImRight_, leftKeypoints, rightKeypoints, matches);
 
-    Eigen::Matrix<double, 3, Eigen::Dynamic> points2d;
-    tracker_->matchFeaturesNaive(leftKeypoints, leftDescriptors, matches, points3d, points2d);
+    Eigen::Matrix3Xd points2d;
+    
+    tracker_->matchFeaturesNaive(leftKeypoints, leftDescriptors, matches, points2d);
 
-    tracker_->getTranform(R_, T_, leftKeypoints, leftDescriptors, points2d, points3d);
+    tracker_->getTranform(R_, T_, points2d); // prePoints3d is at tracker_
+
+    tracker_->updatePreFeatures(leftKeypoints, leftDescriptors, points3d);
+
     combineTransform();
 }
 

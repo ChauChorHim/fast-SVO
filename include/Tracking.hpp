@@ -33,12 +33,13 @@ public:
                      const std::vector<cv::DMatch> &matches);
 
     void matchFeaturesNaive(std::vector<cv::KeyPoint> &leftKeypoints, cv::Mat &leftDescriptors, std::vector<cv::DMatch> &matches,
-                            Eigen::Matrix<double, 4, Eigen::Dynamic> &points3d,
                             Eigen::Matrix<double, 3, Eigen::Dynamic> &points2d);
 
-    void getTranform(Eigen::Matrix3d &R, Eigen::Vector3d &T, 
-                     const std::vector<cv::KeyPoint> &leftKeypoints, const cv::Mat &leftDescriptors,
-                     const Eigen::Matrix3Xd &points2d, const Eigen::Matrix4Xd &points3d);
+    void getTranform(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matrix3Xd &points2d);
+
+    void updatePreFeatures(std::vector<cv::KeyPoint> &leftKeypoints, cv::Mat &leftDescriptors, Eigen::Matrix4Xd &points3d);
+
+    void checkValidProj(const Eigen::Matrix3Xd &points2d, const Eigen::Matrix4Xd &points3d);
 
     enum trackingState {
         NOT_INITIALIZED=1,
@@ -48,12 +49,12 @@ public:
 
 private:
     // tracking state
-    trackingState state;
+    trackingState state_;
 
     // Calibration matrix
     Eigen::Matrix3d K_;
     Eigen::Vector4d distCoef_;
-    float baseline_;
+    double baseline_;
 
     // Projection matrix
     cv::Matx34d P1_;
@@ -75,10 +76,13 @@ private:
     cv::Ptr<cv::DescriptorMatcher> matcher_;
 
     // previous triangulated 3D points
-    Eigen::Matrix<double, 4, Eigen::Dynamic> prePoints3d_;
+    Eigen::Matrix4Xd prePoints3d_;
 
     // p3p solver
     Solver* p3pSolver_;
+
+
+    
 };
 }
 
