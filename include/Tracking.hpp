@@ -32,7 +32,7 @@ public:
                      const std::vector<cv::KeyPoint> &keypoints1, std::vector<cv::KeyPoint> &keypoints2,
                      const std::vector<cv::DMatch> &matches);
 
-    void matchFeaturesNaive(std::vector<cv::KeyPoint> &leftKeypoints, cv::Mat &leftDescriptors, std::vector<cv::DMatch> &matches,
+    void matchFeaturesNaive(const std::vector<cv::KeyPoint> &leftKeypoints, const cv::Mat &leftDescriptors, std::vector<cv::DMatch> &matches,
                             Eigen::Matrix<double, 3, Eigen::Dynamic> &points2d);
 
     void getTranform(Eigen::Matrix3d &R, Eigen::Vector3d &T, const Eigen::Matrix3Xd &points2d);

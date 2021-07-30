@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
         tframe = SVO.updateImages(i); // update the images pair to No. ni
 
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
-        std::cout << std::endl << "----------------" << i << "----------------" << std::endl << std::endl;
+        std::cout << std::endl << "----------------frame " << i << "----------------" << std::endl << std::endl;
         SVO.trackStereo();
 
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();

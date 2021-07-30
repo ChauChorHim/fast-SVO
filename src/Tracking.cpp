@@ -184,14 +184,12 @@ void Tracking::showMatches(const cv::Mat &image1, const cv::Mat &image2,
     cv::waitKey(1);
 }
 
-void Tracking::matchFeaturesNaive(std::vector<cv::KeyPoint> &leftKeypoints, cv::Mat &leftDescriptors, std::vector<cv::DMatch> &matches, 
+void Tracking::matchFeaturesNaive(const std::vector<cv::KeyPoint> &leftKeypoints, const cv::Mat &leftDescriptors, std::vector<cv::DMatch> &matches, 
                                   Eigen::Matrix<double, 3, Eigen::Dynamic> &points2d) {
     if (state_ == OK) {
         std::vector<std::vector<cv::DMatch>> knnMatches;
         matcher_->knnMatch(leftDescriptors, preLeftDescriptors_, knnMatches, 2);
         std::vector<cv::DMatch> goodMatches;
-        std::vector<cv::KeyPoint> goodLeftKeypoints;
-        cv::Mat goodLeftDescriptors;
         Eigen::Matrix<double, 4, Eigen::Dynamic> prePoints3d;
         
         //-- Filter matches using the Lowe's ratio test
@@ -207,9 +205,6 @@ void Tracking::matchFeaturesNaive(std::vector<cv::KeyPoint> &leftKeypoints, cv::
                 knnMatches[i][0].trainIdx = j;
                 goodMatches.push_back(knnMatches[i][0]);
 
-                goodLeftKeypoints.push_back(leftKeypoints[curIndex]);
-                goodLeftDescriptors.push_back(leftDescriptors.row(curIndex));
-
                 prePoints3d.conservativeResize(Eigen::NoChange, j + 1);
                 prePoints3d.col(j) = prePoints3d_.col(preIndex);
 
@@ -222,8 +217,6 @@ void Tracking::matchFeaturesNaive(std::vector<cv::KeyPoint> &leftKeypoints, cv::
             }
         }
         matches = std::move(goodMatches);
-        //leftKeypoints = std::move(goodLeftKeypoints);  // DAMN!!!
-        //leftDescriptors = std::move(goodLeftDescriptors); // WHAT A DAMN BUG!!
         prePoints3d_ = std::move(prePoints3d);
 
     } else if (state_ == NOT_INITIALIZED) {

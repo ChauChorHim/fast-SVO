@@ -83,10 +83,7 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T,
             }
         }
     }
-    Eigen::Matrix<double, 3, 4> P;
-    P << R, T;
-    std::cout << "P: \n" << P << std::endl;
-    std::cout << "best mean error: " << meanError << ", bestInliersum = " << bestInliersNum << ", points2d.cols() = " << points2d.cols() << std::endl;
+//std::cout << "best mean error: " << meanError << ", bestInliersum = " << bestInliersNum << ", points2d.cols() = " << points2d.cols() << std::endl;
 }
 
 void Solver::p3p(const Eigen::Matrix4d &worldPoints, 
