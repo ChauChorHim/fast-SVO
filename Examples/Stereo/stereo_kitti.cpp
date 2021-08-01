@@ -1,18 +1,18 @@
 #include <iostream>
-#include <chrono>
+#include <string>
 
 #include "Dataset.hpp"
 #include "System.hpp"
 
 int main(int argc, char **argv) {
-    if (argc != 3) {
-        std::cerr << std::endl << "Usage: ./stereo_kitti path_to_settings path_to_sequence" << std::endl;
+    if (argc != 4) {
+        std::cerr << std::endl << "Usage: ./stereo_kitti path_to_settings path_to_sequence sequence_no" << std::endl;
         return 1;
     }
 
     // Retrive sequence path to dataset
     // The constructor use private LoadImages
-    fast_SVO::Dataset KITTI {std::string(argv[2])};
+    fast_SVO::Dataset KITTI = fast_SVO::Dataset(std::string(argv[2]), std::string(argv[3])); // path_to_sequence sequence_no
 
     const int imagesNum = KITTI.getImagesNum();
 
@@ -22,18 +22,27 @@ int main(int argc, char **argv) {
     std::cout << "Start processing sequence ..."  << std::endl;
     std::cout << "Images in the sequence: " << imagesNum << std::endl << std::endl;
 
-    // Main loop
+
+    // Record the true frame time
     double tframe = 0;
+
+    // Set the whiteboard for visualizing the plots
+    std::string windowName = "x-y Trajectory"; 
+    cv::namedWindow(windowName);
+    cv::Mat whiteboard = cv::Mat::zeros(cv::Size(1000, 1000), CV_8UC3);
+    whiteboard.setTo(255);
+
+    // Main loop
     for (int i = 0; i < imagesNum; ++i) {
         tframe = SVO.updateImages(i); // update the images pair to No. ni
 
-        std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
         std::cout << std::endl << "----------------frame " << i << "----------------" << std::endl << std::endl;
         SVO.trackStereo();
-
-        std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
-        double ttrack = std::chrono::duration_cast<std::chrono::duration<double>> (t2 - t1).count();
-        tframe += ttrack;
+        if (i != 0) {
+            SVO.calculateCurPose(); // combine current R and T to the previous Rs and Ts
+            SVO.showTrajectory(windowName, whiteboard);
+        }
     }
+
     return 0;
 }

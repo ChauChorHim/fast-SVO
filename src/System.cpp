@@ -1,11 +1,7 @@
-/*
- * 
- */
-/*
- * 
- */
 #include <iostream> // cerr
 #include <tuple>
+#include <chrono>
+#include <vector>
 
 #include "System.hpp"
 
@@ -24,6 +20,10 @@ System::System(const Dataset *dataset, const std::string &strSettingFile, const 
     }
 
     tracker_ = new Tracking(strSettingFile);
+    curEstPose_ << 1, 0, 0, 0,
+                   0, 1, 0, 0, 
+                   0, 0, 1, 0,
+                   0, 0, 0, 1;
 }
 
 /**
@@ -43,10 +43,17 @@ double System::updateImages(const int i) {
 }
 
 void System::trackStereo() {
+    // Initializing keypoints and descriptors for each frame
     std::vector<cv::KeyPoint> leftKeypoints;
     std::vector<cv::KeyPoint> rightKeypoints;
     cv::Mat leftDescriptors;
     cv::Mat rightDescriptors;
+
+    // Initializing the timeset
+    std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
+    double ttrack = std::chrono::duration_cast<std::chrono::duration<double>> (std::chrono::steady_clock::now() - t0).count();
+    t0 = std::chrono::steady_clock::now();
+
     tracker_->updateImagesFeatures(curImLeft_, curImRight_, curTimestamp_, leftKeypoints, rightKeypoints, leftDescriptors, rightDescriptors);
 
     std::vector<cv::DMatch> matches;
@@ -62,11 +69,28 @@ void System::trackStereo() {
 
     tracker_->updatePreFeatures(leftKeypoints, leftDescriptors, points3d);
 
-    combineTransform();
 }
 
-void System::combineTransform() {
+void System::calculateCurPose() {
+    Eigen::Matrix<double, 3, 4> curEstPose_inhomo;
+    Eigen::Matrix4d curEstPose_homo = Eigen::Matrix4d::Zero();
+    curEstPose_inhomo << R_.transpose(), -R_.transpose()*T_;
+    curEstPose_homo.topRows(3) = curEstPose_inhomo;
+    curEstPose_homo(3, 3) = 1;
 
+//std::cout << "curEstPose_homo: \n" << curEstPose_homo << std::endl;
+//std::cout << "curEstPose_: \n" << curEstPose_ << std::endl;
+    curEstPose_ = curEstPose_ * curEstPose_homo;
+    estPoses_.push_back(curEstPose_);
+}
+
+void System::showTrajectory(const std::string &windowName, cv::Mat &whiteboard) {
+//std::cout << "Current estimated pose: \n" << curEstPose_ << std::endl;
+    cv::Point2d point(curEstPose_(0, 3)+500, curEstPose_(1, 3)+500);
+//std::cout << "point: \n" << "(" << curEstPose_(0, 3) << ", " << curEstPose_(1, 3) << ")" << std::endl;
+    cv::circle(whiteboard, point, 1, cv::Scalar(0, 0, 255), -1);
+    cv::imshow(windowName, whiteboard);
+    cv::waitKey(5);
 }
 
 }

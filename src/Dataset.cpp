@@ -1,14 +1,16 @@
 #include <fstream> // ifstream
 #include <sstream> // stringstream
 #include <iomanip> // setfill, stew
+#include <iostream>
 #include "Dataset.hpp"
 
 
 namespace fast_SVO
 {
 
-Dataset::Dataset(const std::string &strPathToSequence) {
-    Dataset::loadImages(strPathToSequence);
+Dataset::Dataset(const std::string &strPathToSequence, const std::string &sequenceNo) : sequenceNo_(sequenceNo) {
+    loadImages(strPathToSequence + sequenceNo_);
+    //loadTruePoses(strPathToSequence, sequenceNo_); 
 }
 
 int Dataset::getImagesNum() {
@@ -45,4 +47,16 @@ void Dataset::loadImages(const std::string &strPathToSequence) {
         vstrImageRight_[i] = strPrefixRight + ss.str() + ".png";
     }
 }
+
+
+void Dataset::loadTruePoses(const std::string &strPathToSequence, const std::string &sequenceNo) {
+    std::string pathToFile = strPathToSequence + std::string("/poses/") + sequenceNo + std::string(".txt");
+    std::cout << pathToFile << std::endl;
+    std::ifstream fin(pathToFile);
+    std::string tmp;
+    while(fin >> tmp) {
+        posesGroundTruth_.push_back(tmp.c_str());
+    }
+}
+
 }

@@ -6,6 +6,8 @@
 #include "Dataset.hpp"
 #include "Tracking.hpp"
 
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 
 namespace fast_SVO
 {
@@ -35,6 +37,12 @@ private:
     Eigen::Matrix3d R_; 
     Eigen::Vector3d T_;
 
+    //-- Current estimated pose
+    Eigen::Matrix4d curEstPose_;
+
+    //-- All estimated poses
+    std::vector<Eigen::Matrix4d> estPoses_;
+
 public:
     System(const Dataset *dataset, const std::string &strSettingFile, const DatasetType datasetType);
     
@@ -42,9 +50,12 @@ public:
 
     void trackStereo();
 
-    void combineTransform();
+    void calculateCurPose();
 
-    void saveTrajecotry(const std::string &filename);
+    void showTrajectory(const std::string &windowName, cv::Mat &whiteboard);
+
+    void saveTrajectory(const std::string &filename);
+
 
 };
 
