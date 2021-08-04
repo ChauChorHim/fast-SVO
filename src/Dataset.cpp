@@ -10,7 +10,7 @@ namespace fast_SVO
 
 Dataset::Dataset(const std::string &strPathToSequence, const std::string &sequenceNo) : sequenceNo_(sequenceNo) {
     loadImages(strPathToSequence + sequenceNo_);
-    //loadTruePoses(strPathToSequence, sequenceNo_); 
+    loadTruePoses(strPathToSequence, sequenceNo_); 
 }
 
 int Dataset::getImagesNum() {

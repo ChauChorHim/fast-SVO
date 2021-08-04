@@ -18,15 +18,17 @@ public:
     void p3pRansac(Eigen::Matrix3d &R, 
                    Eigen::Vector3d &T, 
                    const Eigen::Matrix4Xd &prePoints3d, 
-                   const Eigen::Matrix3Xd &points2d);
+                   const Eigen::Matrix3Xd &points2d,
+                   std::vector<Eigen::Matrix<double, 4, 4>> worldPoints,
+                   std::vector<Eigen::Matrix<double, 3, 4>> imagesVectors);
 
 private:
-    void p3p(const Eigen::Matrix4d &worldPoints, 
+    void p3p(const Eigen::Matrix<double, 4, 4> &worldPoints, 
              const Eigen::Matrix<double, 3, 4> &imageVectors, 
              Eigen::Matrix<double, 3, 16> &poses);
     void roots4thOrder(const std::vector<double> &factors);
     bool uniqueSolution(const Eigen::Matrix<double, 3, 16> &poses, Eigen::Matrix3d &R_est, Eigen::Vector3d &T_est, 
-                        const Eigen::Matrix4d &worldPoints, const Eigen::Matrix<double, 3, 4> &imageVectors);
+                        const Eigen::Matrix<double, 4, 4> &worldPoints, const Eigen::Matrix<double, 3, 4> &imageVectors);
     void checkValidProj(const Eigen::Matrix3Xd &points2d, const Eigen::Matrix4Xd &points3d);
     const size_t numIter_;
     const float epsilon_;

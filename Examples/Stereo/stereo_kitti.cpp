@@ -33,13 +33,14 @@ int main(int argc, char **argv) {
     whiteboard.setTo(255);
 
     // Main loop
-    for (int i = 0; i < imagesNum; ++i) {
+    //for (int i = 0; i < imagesNum; ++i) {
+    for (int i = 0; i < 10; ++i) {
         tframe = SVO.updateImages(i); // update the images pair to No. ni
 
         std::cout << std::endl << "----------------frame " << i << "----------------" << std::endl << std::endl;
         SVO.trackStereo();
         if (i != 0) {
-            SVO.calculateCurPose(); // combine current R and T to the previous Rs and Ts
+            SVO.calculateCurPose(i); // combine current R and T to the previous Rs and Ts
             SVO.showTrajectory(windowName, whiteboard);
         }
     }

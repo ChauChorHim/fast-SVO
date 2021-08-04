@@ -13,7 +13,9 @@ Solver::Solver(const size_t numIter, const float epsilon, const Eigen::Matrix3d 
 }
 
 void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, 
-                       const Eigen::Matrix4Xd &prePoints3d, const Eigen::Matrix3Xd &points2d) {
+                       const Eigen::Matrix4Xd &prePoints3d, const Eigen::Matrix3Xd &points2d,
+                       std::vector<Eigen::Matrix<double, 4, 4>> worldPoints,
+                       std::vector<Eigen::Matrix<double, 3, 4>> imagesVectors) {
     // Get 2D vectors in camera frame
     Eigen::Matrix<double, 3, Eigen::Dynamic> vectors2d;
     vectors2d = invK_ * points2d;
@@ -44,12 +46,19 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T,
     // Best mean error
     double meanError = 99999;
 
+    static int i = 0;
+    std::cout << worldPoints[i] << std::endl;
+    p3p(worldPoints[i], imagesVectors[i], poses);
+    bool validEstimate = uniqueSolution(poses, R_est, T_est, worldPoints[i], imagesVectors[i]);
+    std::cout << "R_est:\n" << R_est << "\nT_est:\n" << T_est << std::endl;
+    i++;
+/*
     for (size_t i = 0; i < numIter_; ++i) {
         // Get 4 random points for p3p 
         for (size_t i = 0; i < randomNumbers.size(); ++i) {
             randomNumbers[i] = randomDistribution(eng);
         }   
-        const Eigen::Matrix4d worldPoints = prePoints3d(Eigen::all, randomNumbers);
+        const Eigen::Matrix<double, 4, 4> worldPoints = prePoints3d(Eigen::all, randomNumbers);
         const Eigen::Matrix<double, 3, 4> imageVectors = vectors2d(Eigen::all, randomNumbers);
 
         // get potential poses (R and T)
@@ -83,10 +92,11 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T,
             }
         }
     }
+*/
 //std::cout << "best mean error: " << meanError << ", bestInliersum = " << bestInliersNum << ", points2d.cols() = " << points2d.cols() << std::endl;
 }
 
-void Solver::p3p(const Eigen::Matrix4d &worldPoints, 
+void Solver::p3p(const Eigen::Matrix<double, 4, 4> &worldPoints, 
                  const Eigen::Matrix<double, 3, 4> &imageVectors,
                  Eigen::Matrix<double, 3, 16> &poses) {
     // Derive world points
@@ -273,7 +283,7 @@ void Solver::roots4thOrder(const std::vector<double> &factors) {
 }
 
 bool Solver::uniqueSolution(const Eigen::Matrix<double, 3, 16> &poses, Eigen::Matrix3d &R_est, Eigen::Vector3d &T_est, 
-                            const Eigen::Matrix4d &worldPoints, const Eigen::Matrix<double, 3, 4> &imageVectors) {
+                            const Eigen::Matrix<double, 4, 4> &worldPoints, const Eigen::Matrix<double, 3, 4> &imageVectors) {
     try
     {
         std::vector<Eigen::Matrix3d> validR;

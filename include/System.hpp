@@ -43,6 +43,9 @@ private:
     //-- All estimated poses
     std::vector<Eigen::Matrix4d> estPoses_;
 
+    //-- Current real pose
+    Eigen::Matrix4d curRealPose_;
+
 public:
     System(const Dataset *dataset, const std::string &strSettingFile, const DatasetType datasetType);
     
@@ -50,7 +53,7 @@ public:
 
     void trackStereo();
 
-    void calculateCurPose();
+    void calculateCurPose(const size_t i);
 
     void showTrajectory(const std::string &windowName, cv::Mat &whiteboard);
 

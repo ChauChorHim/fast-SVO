@@ -59,19 +59,19 @@ void System::trackStereo() {
     std::vector<cv::DMatch> matches;
     Eigen::Matrix4Xd points3d;
     tracker_->matchStereoFeaturesNaive(leftKeypoints, rightKeypoints, leftDescriptors, rightDescriptors, matches, points3d);
-    //tracker_->showMatches(curImLeft_, curImRight_, leftKeypoints, rightKeypoints, matches);
+    tracker_->showMatches(curImLeft_, curImRight_, leftKeypoints, rightKeypoints, matches);
 
     Eigen::Matrix3Xd points2d;
     
     tracker_->matchFeaturesNaive(leftKeypoints, leftDescriptors, matches, points2d);
 
     tracker_->getTranform(R_, T_, points2d); // prePoints3d is at tracker_
-
+//std::cout << "R_:\n" << R_ << "\nT_:\n" << T_ << std::endl;
     tracker_->updatePreFeatures(leftKeypoints, leftDescriptors, points3d);
 
 }
 
-void System::calculateCurPose() {
+void System::calculateCurPose(const size_t i) {
     Eigen::Matrix<double, 3, 4> curEstPose_inhomo;
     Eigen::Matrix4d curEstPose_homo = Eigen::Matrix4d::Zero();
     curEstPose_inhomo << R_.transpose(), -R_.transpose()*T_;
@@ -82,13 +82,22 @@ void System::calculateCurPose() {
 //std::cout << "curEstPose_: \n" << curEstPose_ << std::endl;
     curEstPose_ = curEstPose_ * curEstPose_homo;
     estPoses_.push_back(curEstPose_);
+
+    //Eigen::Matrix4d curRealPose;
+    //for (int j = 0; j < 12; ++j) {
+    //    curRealPose << stof(dataset_->posesGroundTruth_[12 * i + j]);
+    //}
+    //curRealPose_ = curRealPose + curRealPose_;
 }
 
 void System::showTrajectory(const std::string &windowName, cv::Mat &whiteboard) {
 //std::cout << "Current estimated pose: \n" << curEstPose_ << std::endl;
-    cv::Point2d point(curEstPose_(0, 3)+500, curEstPose_(1, 3)+500);
-//std::cout << "point: \n" << "(" << curEstPose_(0, 3) << ", " << curEstPose_(1, 3) << ")" << std::endl;
-    cv::circle(whiteboard, point, 1, cv::Scalar(0, 0, 255), -1);
+    cv::Point2d pointEst(curEstPose_(0, 3) + 500, curEstPose_(1, 3) + 500);
+    //cv::Point2d pointGT(curRealPose_(0, 3) + 500, curRealPose_(1, 3) + 500);
+//std::cout << "point: \n" << "(" << pointEst.x - 500 << ", " << pointEst.y - 500 << ")" << std::endl;
+//std::cout << "real point: \n" << "(" << pointGT.x << ", " << pointGT.y << ")" << std::endl;
+    cv::circle(whiteboard, pointEst, 1, cv::Scalar(0, 0, 255), -1);
+    //cv::circle(whiteboard, pointGT, 1, cv::Scalar(255, 0, 0), -1);
     cv::imshow(windowName, whiteboard);
     cv::waitKey(5);
 }
