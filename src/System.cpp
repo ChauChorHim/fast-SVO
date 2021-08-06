@@ -92,7 +92,7 @@ void System::calculateCurPose(const size_t i) {
 
 void System::showTrajectory(const std::string &windowName, cv::Mat &whiteboard) {
 //std::cout << "Current estimated pose: \n" << curEstPose_ << std::endl;
-    cv::Point2d pointEst(curEstPose_(0, 3) + 500, curEstPose_(1, 3) + 500);
+    cv::Point2d pointEst(curEstPose_(2, 3) + 500, -curEstPose_(0, 3) + 500);
     //cv::Point2d pointGT(curRealPose_(0, 3) + 500, curRealPose_(1, 3) + 500);
 //std::cout << "point: \n" << "(" << pointEst.x - 500 << ", " << pointEst.y - 500 << ")" << std::endl;
 //std::cout << "real point: \n" << "(" << pointGT.x << ", " << pointGT.y << ")" << std::endl;

@@ -157,13 +157,15 @@ void Tracking::matchStereoFeaturesNaive(std::vector<cv::KeyPoint> &leftKeypoints
         cv::cv2eigen(pnts3D, points3d);
         size_t lastRowNum = points3d.rows() - 1;
         points3d.array().rowwise() /= points3d.row(lastRowNum).array();
+    } else {
+        std::cout << "leftKeypointsCoor.size() < 4\n";
     }
 
     // Check the projection
     //Eigen::Matrix3Xd points2d;
     //points2d.conservativeResize(Eigen::NoChange, leftKeypoints.size());
     //Eigen::Vector3d point2d;
-    //for (int i = 0; i < leftKeypoints.size(); ++i) {
+    //for (size_t i = 0; i < leftKeypoints.size(); ++i) {
     //    point2d << leftKeypoints[i].pt.x, leftKeypoints[i].pt.y, 1;
     //    points2d.col(i) = point2d; 
     //}
