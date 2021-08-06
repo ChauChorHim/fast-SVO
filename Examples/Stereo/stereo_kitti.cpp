@@ -33,8 +33,8 @@ int main(int argc, char **argv) {
     whiteboard.setTo(255);
 
     // Main loop
-    //for (int i = 0; i < imagesNum; ++i) {
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < imagesNum; ++i) {
+    //for (int i = 0; i < 2; ++i) {
         tframe = SVO.updateImages(i); // update the images pair to No. ni
 
         std::cout << std::endl << "----------------frame " << i << "----------------" << std::endl << std::endl;

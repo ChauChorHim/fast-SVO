@@ -57,19 +57,11 @@ target_link_libraries(stereo_kitti ${PROJECT_NAME})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
 
 add_executable(
-    test_Fast
-    test/test_Fast.cpp
-)
-target_link_libraries(
-    test_Fast
-    ${OpenCV_LIBS}
+    test_P3P
+    test/testp3p.cpp
 )
 
-add_executable(
-    test_ORB
-    test/test_ORB.cpp
-)
 target_link_libraries(
-    test_ORB
-    ${OpenCV_LIBS}
+    test_P3P
+    ${EIGEN3_LIBS}
 )

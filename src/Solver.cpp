@@ -13,18 +13,17 @@ Solver::Solver(const size_t numIter, const float epsilon, const Eigen::Matrix3d 
 }
 
 void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T, 
-                       const Eigen::Matrix4Xd &prePoints3d, const Eigen::Matrix3Xd &points2d,
-                       std::vector<Eigen::Matrix<double, 4, 4>> worldPoints,
-                       std::vector<Eigen::Matrix<double, 3, 4>> imagesVectors) {
+                       const Eigen::Matrix4Xd &prePoints3d, const Eigen::Matrix3Xd &points2d) {
     // Get 2D vectors in camera frame
     Eigen::Matrix<double, 3, Eigen::Dynamic> vectors2d;
     vectors2d = invK_ * points2d;
     size_t lastRowNum = vectors2d.rows() - 1; // May delete?
     vectors2d.array().rowwise() /= vectors2d.row(lastRowNum).array(); // May delete?
 
+    Eigen::Matrix3Xd vectors2d_norm = vectors2d;
     // Normalize the 2D vectors
-    for (int i = 0; i < vectors2d.cols(); ++i)
-        vectors2d.col(i).normalize();
+    for (int i = 0; i < vectors2d_norm.cols(); ++i)
+        vectors2d_norm.col(i).normalize();
 
     // Random machine setup
     long int numPoints{prePoints3d.cols()};
@@ -46,26 +45,20 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T,
     // Best mean error
     double meanError = 99999;
 
-    static int i = 0;
-    std::cout << worldPoints[i] << std::endl;
-    p3p(worldPoints[i], imagesVectors[i], poses);
-    bool validEstimate = uniqueSolution(poses, R_est, T_est, worldPoints[i], imagesVectors[i]);
-    std::cout << "R_est:\n" << R_est << "\nT_est:\n" << T_est << std::endl;
-    i++;
-/*
     for (size_t i = 0; i < numIter_; ++i) {
         // Get 4 random points for p3p 
         for (size_t i = 0; i < randomNumbers.size(); ++i) {
             randomNumbers[i] = randomDistribution(eng);
         }   
         const Eigen::Matrix<double, 4, 4> worldPoints = prePoints3d(Eigen::all, randomNumbers);
-        const Eigen::Matrix<double, 3, 4> imageVectors = vectors2d(Eigen::all, randomNumbers);
+        const Eigen::Matrix<double, 3, 4> imageVectors = vectors2d_norm(Eigen::all, randomNumbers);
+        const Eigen::Matrix<double, 3, 4> imagePoints = vectors2d(Eigen::all, randomNumbers);
 
         // get potential poses (R and T)
         p3p(worldPoints, imageVectors, poses);
         
         // disambiguate the potential poses and get the best R_est and T_est
-        bool validEstimate = uniqueSolution(poses, R_est, T_est, worldPoints, imageVectors);
+        bool validEstimate = uniqueSolution(poses, R_est, T_est, worldPoints, imagePoints);
 
         if(validEstimate) {
             // Construct the estimated projection matrix P_est
@@ -92,7 +85,7 @@ void Solver::p3pRansac(Eigen::Matrix3d &R, Eigen::Vector3d &T,
             }
         }
     }
-*/
+
 //std::cout << "best mean error: " << meanError << ", bestInliersum = " << bestInliersNum << ", points2d.cols() = " << points2d.cols() << std::endl;
 }
 

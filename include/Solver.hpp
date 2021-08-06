@@ -18,9 +18,7 @@ public:
     void p3pRansac(Eigen::Matrix3d &R, 
                    Eigen::Vector3d &T, 
                    const Eigen::Matrix4Xd &prePoints3d, 
-                   const Eigen::Matrix3Xd &points2d,
-                   std::vector<Eigen::Matrix<double, 4, 4>> worldPoints,
-                   std::vector<Eigen::Matrix<double, 3, 4>> imagesVectors);
+                   const Eigen::Matrix3Xd &points2d);
 
 private:
     void p3p(const Eigen::Matrix<double, 4, 4> &worldPoints, 
