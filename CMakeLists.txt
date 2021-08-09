@@ -58,12 +58,17 @@ target_link_libraries(stereo_kitti ${PROJECT_NAME})
 # Test
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
 
-add_executable(
-    test_P3P
-    test/testp3p.cpp
-)
+#add_executable(
+#    test_P3P
+#    test/testp3p.cpp
+#)
+#
+#target_link_libraries(
+#    test_P3P
+#    ${EIGEN3_LIBS}
+#)
 
-target_link_libraries(
-    test_P3P
-    ${EIGEN3_LIBS}
+add_executable(
+    test_Timer
+    test/test_Timer.cpp
 )
