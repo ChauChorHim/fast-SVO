@@ -13,7 +13,7 @@ Dataset::Dataset(const std::string &strPathToSequence, const std::string &sequen
     loadTruePoses(strPathToSequence, sequenceNo_); 
 }
 
-int Dataset::getImagesNum() {
+int Dataset::getImagesNum() const {
     return vstrImageLeft_.size();
 }
 
@@ -54,9 +54,23 @@ void Dataset::loadTruePoses(const std::string &strPathToSequence, const std::str
     std::cout << pathToFile << std::endl;
     std::ifstream fin(pathToFile);
     std::string tmp;
+    std::vector<std::string> posesGT;
     while(fin >> tmp) {
-        posesGroundTruth_.push_back(tmp.c_str());
+        posesGT.push_back(tmp.c_str());
     }
+    for (int i = 0; i < getImagesNum(); ++i) {
+        std::vector<double> pose;
+        pose.reserve(12);
+        for (int j = 0; j < 12; ++j) {
+            pose.push_back(std::stod(posesGT[12 * i + j]));
+        }
+        Eigen::Matrix<double, 3, 4> curRealPose;
+        curRealPose << pose[0], pose[1], pose[2], pose[3],
+                       pose[4], pose[5], pose[6], pose[7],
+                       pose[8], pose[9], pose[10], pose[11];
+        posesGroundTruth_.push_back(curRealPose);
+    }
+    
 }
 
 }

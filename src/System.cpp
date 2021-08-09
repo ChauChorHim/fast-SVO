@@ -24,6 +24,10 @@ System::System(const Dataset *dataset, const std::string &strSettingFile, const 
                    0, 1, 0, 0, 
                    0, 0, 1, 0,
                    0, 0, 0, 1;
+    curRealPose_ << 1, 0, 0, 0,
+                    0, 1, 0, 0,
+                    0, 0, 1, 0;
+    estPoses_.reserve(dataset_->getImagesNum() + 1);
 }
 
 /**
@@ -83,21 +87,17 @@ void System::calculateCurPose(const size_t i) {
     curEstPose_ = curEstPose_ * curEstPose_homo;
     estPoses_.push_back(curEstPose_);
 
-    //Eigen::Matrix4d curRealPose;
-    //for (int j = 0; j < 12; ++j) {
-    //    curRealPose << stof(dataset_->posesGroundTruth_[12 * i + j]);
-    //}
-    //curRealPose_ = curRealPose + curRealPose_;
+    curRealPose_ = dataset_->posesGroundTruth_[i];
 }
 
 void System::showTrajectory(const std::string &windowName, cv::Mat &whiteboard) {
 //std::cout << "Current estimated pose: \n" << curEstPose_ << std::endl;
-    cv::Point2d pointEst(curEstPose_(2, 3) + 500, -curEstPose_(0, 3) + 500);
-    //cv::Point2d pointGT(curRealPose_(0, 3) + 500, curRealPose_(1, 3) + 500);
+    cv::Point2d pointEst(curEstPose_(2, 3) + 500, curEstPose_(0, 3) + 500);
+    cv::Point2d pointGT(curRealPose_(2, 3) + 500, curRealPose_(0, 3) + 500);
 //std::cout << "point: \n" << "(" << pointEst.x - 500 << ", " << pointEst.y - 500 << ")" << std::endl;
 //std::cout << "real point: \n" << "(" << pointGT.x << ", " << pointGT.y << ")" << std::endl;
     cv::circle(whiteboard, pointEst, 1, cv::Scalar(0, 0, 255), -1);
-    //cv::circle(whiteboard, pointGT, 1, cv::Scalar(255, 0, 0), -1);
+    cv::circle(whiteboard, pointGT, 1, cv::Scalar(255, 0, 0), -1);
     cv::imshow(windowName, whiteboard);
     cv::waitKey(5);
 }

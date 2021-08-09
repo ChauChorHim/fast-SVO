@@ -44,7 +44,7 @@ private:
     std::vector<Eigen::Matrix4d> estPoses_;
 
     //-- Current real pose
-    Eigen::Matrix4d curRealPose_;
+    Eigen::Matrix<double, 3, 4> curRealPose_;
 
 public:
     System(const Dataset *dataset, const std::string &strSettingFile, const DatasetType datasetType);
