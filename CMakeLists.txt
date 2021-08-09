@@ -33,6 +33,8 @@ add_library(
     src/System.cpp
     src/Tracking.cpp
     src/Solver.cpp
+    src/Timer.cpp
+    src/Module.cpp
 )
 
 

@@ -14,13 +14,13 @@ int main(int argc, char **argv) {
     // The constructor use private LoadImages
     fast_SVO::Dataset KITTI = fast_SVO::Dataset(std::string(argv[2]), std::string(argv[3])); // path_to_sequence sequence_no
 
-    const int imagesNum = KITTI.getImagesNum();
+    const int imagesAmount = KITTI.getImagesAmount();
 
     fast_SVO::System SVO(&KITTI, argv[1], fast_SVO::System::KITTI);
 
     std::cout << std::endl << "--------" << std::endl;
     std::cout << "Start processing sequence ..."  << std::endl;
-    std::cout << "Images in the sequence: " << imagesNum << std::endl << std::endl;
+    std::cout << "Images amount in the sequence: " << imagesAmount << std::endl << std::endl;
 
 
     // Record the true frame time
@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
     whiteboard.setTo(255);
 
     // Main loop
-    for (int i = 0; i < imagesNum; ++i) {
+    for (int i = 0; i < imagesAmount; ++i) {
     //for (int i = 0; i < 2; ++i) {
         tframe = SVO.updateImages(i); // update the images pair to No. ni
 

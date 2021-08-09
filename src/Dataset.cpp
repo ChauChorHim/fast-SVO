@@ -8,13 +8,13 @@
 namespace fast_SVO
 {
 
-Dataset::Dataset(const std::string &strPathToSequence, const std::string &sequenceNo) : sequenceNo_(sequenceNo) {
-    loadImages(strPathToSequence + sequenceNo_);
-    loadTruePoses(strPathToSequence, sequenceNo_); 
+Dataset::Dataset(const std::string &strPathToSequence, const std::string &sequenceNo = "-1") {
+    loadImages(strPathToSequence + sequenceNo);
+    loadTruePoses(strPathToSequence, sequenceNo); 
 }
 
-int Dataset::getImagesNum() const {
-    return vstrImageLeft_.size();
+int Dataset::getImagesAmount() const {
+    return strImageLeft_.size();
 }
 
 void Dataset::loadImages(const std::string &strPathToSequence) {
@@ -29,22 +29,22 @@ void Dataset::loadImages(const std::string &strPathToSequence) {
             ss << s;
             double t;
             ss >> t;
-            vTimestamps_.push_back(t);
+            timestamps_.push_back(t);
         }
     }
     std::string strPrefixLeft = strPathToSequence + "/image_0/";
     std::string strPrefixRight = strPathToSequence + "/image_1/";
 
-    const int nTimes = vTimestamps_.size();
-    vstrImageLeft_.resize(nTimes);
-    vstrImageRight_.resize(nTimes);
+    const int nTimes = timestamps_.size();
+    strImageLeft_.resize(nTimes);
+    strImageRight_.resize(nTimes);
 
     for(int i=0; i<nTimes; i++)
     {
         std::stringstream ss;
         ss << std::setfill('0') << std::setw(6) << i;
-        vstrImageLeft_[i] = strPrefixLeft + ss.str() + ".png";
-        vstrImageRight_[i] = strPrefixRight + ss.str() + ".png";
+        strImageLeft_[i] = strPrefixLeft + ss.str() + ".png";
+        strImageRight_[i] = strPrefixRight + ss.str() + ".png";
     }
 }
 
@@ -58,7 +58,7 @@ void Dataset::loadTruePoses(const std::string &strPathToSequence, const std::str
     while(fin >> tmp) {
         posesGT.push_back(tmp.c_str());
     }
-    for (int i = 0; i < getImagesNum(); ++i) {
+    for (int i = 0; i < getImagesAmount(); ++i) {
         std::vector<double> pose;
         pose.reserve(12);
         for (int j = 0; j < 12; ++j) {

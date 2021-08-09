@@ -27,7 +27,7 @@ System::System(const Dataset *dataset, const std::string &strSettingFile, const 
     curRealPose_ << 1, 0, 0, 0,
                     0, 1, 0, 0,
                     0, 0, 1, 0;
-    estPoses_.reserve(dataset_->getImagesNum() + 1);
+    estPoses_.reserve(dataset_->getImagesAmount() + 1);
 }
 
 /**
@@ -36,12 +36,12 @@ System::System(const Dataset *dataset, const std::string &strSettingFile, const 
  * @return {double} curTimestamp_ (current time stamp)
  */
 double System::updateImages(const int i) {
-    curTimestamp_ = dataset_->vTimestamps_[i];
-    curImLeft_ = cv::imread(dataset_->vstrImageLeft_[i], cv::IMREAD_UNCHANGED);
-    curImRight_ = cv::imread(dataset_->vstrImageRight_[i], cv::IMREAD_UNCHANGED);
+    curTimestamp_ = dataset_->timestamps_[i];
+    curImLeft_ = cv::imread(dataset_->strImageLeft_[i], cv::IMREAD_UNCHANGED);
+    curImRight_ = cv::imread(dataset_->strImageRight_[i], cv::IMREAD_UNCHANGED);
     if(curImLeft_.empty()) {
         std::cerr << std::endl << "Failed to load image at: " 
-             << std::string(dataset_->vstrImageLeft_[i]) << std::endl; 
+             << std::string(dataset_->strImageLeft_[i]) << std::endl; 
     }
     return curTimestamp_; // used for checking the current time stamp
 }
