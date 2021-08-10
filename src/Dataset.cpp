@@ -8,7 +8,7 @@
 namespace fast_SVO
 {
 
-Dataset::Dataset(const std::string &strPathToSequence, const std::string &sequenceNo = "-1") {
+Dataset::Dataset(const std::string &strPathToSequence, const std::string &sequenceNo) {
     loadImages(strPathToSequence + sequenceNo);
     loadTruePoses(strPathToSequence, sequenceNo); 
 }

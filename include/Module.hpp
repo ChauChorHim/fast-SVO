@@ -19,7 +19,8 @@ public:
     virtual void logInfo() = 0;
 
 private:
-    Timer timer;
+    Timer moduleTimer_;
+    std::shared_ptr<float> moduleRunTime_;
 };
 
     

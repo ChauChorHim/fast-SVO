@@ -8,9 +8,9 @@
 namespace fast_SVO
 {
 
-class Dataset {
+class Dataset{
 public:
-    Dataset(const std::string &strPathToSequence, const std::string &sequenceNo);
+    Dataset(const std::string &strPathToSequence, const std::string &sequenceNo = "-1");
     int getImagesAmount() const;
 
 private:
