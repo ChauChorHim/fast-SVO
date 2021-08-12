@@ -4,6 +4,7 @@
 #include <string>
 
 #include "Solver.hpp"
+#include "Module.hpp"
 
 #define OPENCV_TRAITS_ENABLE_DEPRECATED
 #include <opencv2/core/mat.hpp>
@@ -15,7 +16,7 @@
 namespace fast_SVO
 {
 
-class Tracking {
+class Tracking final : public Module{
 
 public:
     Tracking(const std::string &strSettingFile);
@@ -40,6 +41,8 @@ public:
     void updatePreFeatures(std::vector<cv::KeyPoint> &leftKeypoints, cv::Mat &leftDescriptors, Eigen::Matrix4Xd &points3d);
 
     void checkValidProj(const Eigen::Matrix3Xd &points2d, const Eigen::Matrix4Xd &points3d);
+
+    void logInfo();
 
     enum trackingState {
         NOT_INITIALIZED=1,
@@ -81,8 +84,8 @@ private:
     // p3p solver
     Solver* p3pSolver_;
 
-
-    
+    // Initialize function
+    void initTracker(const std::string &strSettingFile);
 };
 }
 

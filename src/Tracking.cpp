@@ -1,9 +1,3 @@
-/*
- * 
- */
-/*
- * 
- */
 #include <iostream>
 #include <thread>
 
@@ -14,86 +8,8 @@
 namespace fast_SVO
 {
 
-Tracking::Tracking(const std::string &strSettingFile) {
-    state_ = NOT_INITIALIZED;
-    cv::FileStorage fSettings(strSettingFile, cv::FileStorage::READ);
-    double fx = fSettings["Camera.fx"];
-    double fy = fSettings["Camera.fy"];
-    double cx = fSettings["Camera.cx"];
-    double cy = fSettings["Camera.cy"];
-
-    K_ << fx, 0, cx,
-          0, fy, cy,
-          0, 0, 1;
-
-    cv::Matx34d P = cv::Matx34d(K_(0, 0), K_(0, 1), K_(0, 2), 0,
-                                K_(1, 0), K_(1, 1), K_(1, 2), 0,
-                                K_(2, 0), K_(2, 1), K_(2, 2), 0);
-    P1_ = P;
-
-    baseline_ = fSettings["Camera.bf"];
-    P(0, 3) = -baseline_;
-    P2_ = P;
-
-    distCoef_(0) = fSettings["Camera.k1"];
-    distCoef_(1) = fSettings["Camera.k2"];
-    distCoef_(2) = fSettings["Camera.p1"];
-    distCoef_(3) = fSettings["Camera.p2"];
-    const float k3 = fSettings["Camera.k3"];
-    if(k3!=0) {
-        distCoef_.resize(5);
-        distCoef_(4) = k3;
-    }
-
-    float fps = fSettings["Camera.fps"];
-    if (fps == 0)
-        fps = 30;
-
-    std::cout << std::endl << "Camera Parameters: " << std::endl;
-    std::cout << "- fx: " << fx << std::endl;
-    std::cout << "- fy: " << fy << std::endl;
-    std::cout << "- cx: " << cx << std::endl;
-    std::cout << "- cy: " << cy << std::endl;
-    std::cout << "- k1: " << distCoef_(0) << std::endl;
-    std::cout << "- k2: " << distCoef_(1) << std::endl;
-    if(distCoef_.rows()==5)
-        std::cout << "- k3: " << distCoef_(4) << std::endl;
-    std::cout << "- p1: " << distCoef_(2) << std::endl;
-    std::cout << "- p2: " << distCoef_(3) << std::endl;
-    std::cout << "- fps: " << fps << std::endl;
-
-    int rgbOrder = fSettings["Camera.RGB"];
-    rgbOrder_ = rgbOrder;
-    if(rgbOrder_)
-        std::cout << "- color order: RGB (ignored if grayscale)" << std::endl;
-    else
-        std::cout << "- color order: BGR (ignored if grayscale)" << std::endl;
-
-    // Load ORB parameters
-    const int nFeatures = fSettings["ORBextractor.nFeatures"];
-    const float scaleFactor = fSettings["ORBextractor.scaleFactor"];
-    const int nLevels = fSettings["ORBextractor.nLevels"];
-    ORBextractorLeft_ = cv::ORB::create(nFeatures,scaleFactor,nLevels);
-    ORBextractorRight_ = cv::ORB::create(nFeatures,scaleFactor,nLevels);
-
-    std::cout << std::endl  << "ORB Extractor Parameters: " << std::endl;
-    std::cout << "- Number of Features: " << nFeatures << std::endl;
-    std::cout << "- Scale Levels: " << nLevels << std::endl;
-    std::cout << "- Scale Factor: " << scaleFactor << std::endl;
-
-    matcher_ = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE_HAMMING);
-
-    // Load RANSAC parameters
-    const float confidence = fSettings["RANSAC.confidence"];
-    const float probability = fSettings["RANSAC.probability"];
-    const size_t numIter = ceil(log(1. - confidence) / log(1. - pow(probability, 4)));
-    const float epsilon = K_(0, 2) * 0.02;
-    std::cout << std::endl  << "RANSAC Parameters: " << std::endl;
-    std::cout << "- RANSAC confidence: " << confidence << std::endl;
-    std::cout << "- RANSAC probability: " << probability << std::endl;
-    std::cout << "- RANSAC Number of Iteration: " << numIter << std::endl;
-    std::cout << "- RANSAC epsilon: " << epsilon << std::endl;
-    p3pSolver_ = new Solver(numIter, epsilon, K_);
+Tracking::Tracking(const std::string &strSettingFile) : Module(), state_{NOT_INITIALIZED} {
+    initTracker(strSettingFile);
 }
 
 void Tracking::updateImagesFeatures(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp, 
@@ -257,6 +173,90 @@ void Tracking::checkValidProj(const Eigen::Matrix3Xd &points2d, const Eigen::Mat
     
         std::cout << "meanError: " << meanError / points2d.cols() << std::endl;
     }
+}
+
+void Tracking::logInfo() { }
+
+void Tracking::initTracker(const std::string &strSettingFile) {
+    
+    cv::FileStorage fSettings(strSettingFile, cv::FileStorage::READ);
+    double fx = fSettings["Camera.fx"];
+    double fy = fSettings["Camera.fy"];
+    double cx = fSettings["Camera.cx"];
+    double cy = fSettings["Camera.cy"];
+
+    K_ << fx, 0, cx,
+          0, fy, cy,
+          0, 0, 1;
+
+    cv::Matx34d P = cv::Matx34d(K_(0, 0), K_(0, 1), K_(0, 2), 0,
+                                K_(1, 0), K_(1, 1), K_(1, 2), 0,
+                                K_(2, 0), K_(2, 1), K_(2, 2), 0);
+    P1_ = P;
+
+    baseline_ = fSettings["Camera.bf"];
+    P(0, 3) = -baseline_;
+    P2_ = P;
+
+    distCoef_(0) = fSettings["Camera.k1"];
+    distCoef_(1) = fSettings["Camera.k2"];
+    distCoef_(2) = fSettings["Camera.p1"];
+    distCoef_(3) = fSettings["Camera.p2"];
+    const float k3 = fSettings["Camera.k3"];
+    if(k3!=0) {
+        distCoef_.resize(5);
+        distCoef_(4) = k3;
+    }
+
+    float fps = fSettings["Camera.fps"];
+    if (fps == 0)
+        fps = 30;
+
+    std::cout << std::endl << "Camera Parameters: " << std::endl;
+    std::cout << "- fx: " << fx << std::endl;
+    std::cout << "- fy: " << fy << std::endl;
+    std::cout << "- cx: " << cx << std::endl;
+    std::cout << "- cy: " << cy << std::endl;
+    std::cout << "- k1: " << distCoef_(0) << std::endl;
+    std::cout << "- k2: " << distCoef_(1) << std::endl;
+    if(distCoef_.rows()==5)
+        std::cout << "- k3: " << distCoef_(4) << std::endl;
+    std::cout << "- p1: " << distCoef_(2) << std::endl;
+    std::cout << "- p2: " << distCoef_(3) << std::endl;
+    std::cout << "- fps: " << fps << std::endl;
+
+    int rgbOrder = fSettings["Camera.RGB"];
+    rgbOrder_ = rgbOrder;
+    if(rgbOrder_)
+        std::cout << "- color order: RGB (ignored if grayscale)" << std::endl;
+    else
+        std::cout << "- color order: BGR (ignored if grayscale)" << std::endl;
+
+    // Load ORB parameters
+    const int nFeatures = fSettings["ORBextractor.nFeatures"];
+    const float scaleFactor = fSettings["ORBextractor.scaleFactor"];
+    const int nLevels = fSettings["ORBextractor.nLevels"];
+    ORBextractorLeft_ = cv::ORB::create(nFeatures,scaleFactor,nLevels);
+    ORBextractorRight_ = cv::ORB::create(nFeatures,scaleFactor,nLevels);
+
+    std::cout << std::endl  << "ORB Extractor Parameters: " << std::endl;
+    std::cout << "- Number of Features: " << nFeatures << std::endl;
+    std::cout << "- Scale Levels: " << nLevels << std::endl;
+    std::cout << "- Scale Factor: " << scaleFactor << std::endl;
+
+    matcher_ = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE_HAMMING);
+
+    // Load RANSAC parameters
+    const float confidence = fSettings["RANSAC.confidence"];
+    const float probability = fSettings["RANSAC.probability"];
+    const size_t numIter = ceil(log(1. - confidence) / log(1. - pow(probability, 4)));
+    const float epsilon = K_(0, 2) * 0.02;
+    std::cout << std::endl  << "RANSAC Parameters: " << std::endl;
+    std::cout << "- RANSAC confidence: " << confidence << std::endl;
+    std::cout << "- RANSAC probability: " << probability << std::endl;
+    std::cout << "- RANSAC Number of Iteration: " << numIter << std::endl;
+    std::cout << "- RANSAC epsilon: " << epsilon << std::endl;
+    p3pSolver_ = new Solver(numIter, epsilon, K_);
 }
 
 }

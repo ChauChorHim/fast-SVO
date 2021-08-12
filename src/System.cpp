@@ -11,9 +11,9 @@ namespace fast_SVO
 {
 
 System::System(const Dataset *dataset, const std::string &strSettingFile, const DatasetType datasetType) : 
-               Module(), datasetType_(datasetType), dataset_(dataset) {
+                Module(), datasetType_(datasetType), dataset_(dataset) {
 
-    //Check settings file
+    //Check settings file path
     cv::FileStorage fsSettings(strSettingFile.c_str(), cv::FileStorage::READ);
     if(!fsSettings.isOpened()) {
         std::cerr << "Failed to open settings file at: " << strSettingFile << std::endl;
@@ -29,6 +29,10 @@ System::System(const Dataset *dataset, const std::string &strSettingFile, const 
                     0, 1, 0, 0,
                     0, 0, 1, 0;
     estPoses_.reserve(dataset_->getImagesAmount() + 1);
+}
+
+System::~System() {
+    delete tracker_;
 }
 
 /**

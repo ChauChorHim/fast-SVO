@@ -49,6 +49,8 @@ private:
 
 public:
     System(const Dataset *dataset, const std::string &strSettingFile, const DatasetType datasetType);
+
+    ~System();
     
     double updateImages(const int i);
 
