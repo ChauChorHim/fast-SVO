@@ -5,6 +5,7 @@
 
 #include "Dataset.hpp"
 #include "Tracking.hpp"
+#include "Module.hpp"
 
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -12,9 +13,7 @@
 namespace fast_SVO
 {
 
-class Tracking;
-
-class System
+class System final : public Module
 {
 public:
     // Input dataset
@@ -27,7 +26,9 @@ private:
     const DatasetType datasetType_;
     const Dataset* dataset_;
 
-    cv::Mat curImLeft_, curImRight_, preImLeft_;
+    size_t curImageNo;
+
+    cv::Mat curImLeft_, curImRight_;
     double curTimestamp_ = 0;
 
     //-- Tracker. It receives a frame and computes the associated camera pose.
@@ -53,12 +54,11 @@ public:
 
     void trackStereo();
 
-    void calculateCurPose(const size_t i);
+    void calculateCurPose();
 
     void showTrajectory(const std::string &windowName, cv::Mat &whiteboard);
 
-    void saveTrajectory(const std::string &filename);
-
+    void logInfo();
 
 };
 

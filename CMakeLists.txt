@@ -68,7 +68,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
 #    ${EIGEN3_LIBS}
 #)
 
+#add_executable(
+#    test_Timer
+#    test/test_Timer.cpp
+#)
+
 add_executable(
-    test_Timer
-    test/test_Timer.cpp
+    test_Module
+    test/test_Module.cpp 
 )

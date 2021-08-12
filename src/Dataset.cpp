@@ -17,6 +17,19 @@ int Dataset::getImagesAmount() const {
     return strImageLeft_.size();
 }
 
+// i: image No. isLeft: return left image file path if isLeft == 1
+const std::string Dataset::getStrImage(const int i, const bool isLeft) const {
+    return isLeft ? strImageLeft_[i] : strImageRight_[i];
+}
+
+const double Dataset::getTimestamps(const int i) const {
+    return timestamps_[i];
+}
+
+const Eigen::Matrix<double, 3, 4> Dataset::getPoseGroundTruth(const int i) const {
+    return posesGroundTruth_[i];
+}
+
 void Dataset::loadImages(const std::string &strPathToSequence) {
     std::ifstream fTimes;
     std::string strPathTimeFile = strPathToSequence + "/times.txt";

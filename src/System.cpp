@@ -10,7 +10,8 @@
 namespace fast_SVO
 {
 
-System::System(const Dataset *dataset, const std::string &strSettingFile, const DatasetType datasetType) : datasetType_(datasetType), dataset_(dataset) {
+System::System(const Dataset *dataset, const std::string &strSettingFile, const DatasetType datasetType) : 
+               Module(), datasetType_(datasetType), dataset_(dataset) {
 
     //Check settings file
     cv::FileStorage fsSettings(strSettingFile.c_str(), cv::FileStorage::READ);
@@ -36,13 +37,14 @@ System::System(const Dataset *dataset, const std::string &strSettingFile, const 
  * @return {double} curTimestamp_ (current time stamp)
  */
 double System::updateImages(const int i) {
-    curTimestamp_ = dataset_->timestamps_[i];
-    curImLeft_ = cv::imread(dataset_->strImageLeft_[i], cv::IMREAD_UNCHANGED);
-    curImRight_ = cv::imread(dataset_->strImageRight_[i], cv::IMREAD_UNCHANGED);
+    curTimestamp_ = dataset_->getTimestamps(i);
+    curImLeft_ = cv::imread(dataset_->getStrImage(i, 1), cv::IMREAD_UNCHANGED);
+    curImRight_ = cv::imread(dataset_->getStrImage(i, 0), cv::IMREAD_UNCHANGED);
     if(curImLeft_.empty()) {
         std::cerr << std::endl << "Failed to load image at: " 
-             << std::string(dataset_->strImageLeft_[i]) << std::endl; 
+             << std::string(dataset_->getStrImage(i, 1)) << std::endl; 
     }
+    curImageNo = i;
     return curTimestamp_; // used for checking the current time stamp
 }
 
@@ -52,11 +54,6 @@ void System::trackStereo() {
     std::vector<cv::KeyPoint> rightKeypoints;
     cv::Mat leftDescriptors;
     cv::Mat rightDescriptors;
-
-    // Initializing the timeset
-    std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();
-    double ttrack = std::chrono::duration_cast<std::chrono::duration<double>> (std::chrono::steady_clock::now() - t0).count();
-    t0 = std::chrono::steady_clock::now();
 
     tracker_->updateImagesFeatures(curImLeft_, curImRight_, curTimestamp_, leftKeypoints, rightKeypoints, leftDescriptors, rightDescriptors);
 
@@ -70,28 +67,26 @@ void System::trackStereo() {
     tracker_->matchFeaturesNaive(leftKeypoints, leftDescriptors, matches, points2d);
 
     tracker_->getTranform(R_, T_, points2d); // prePoints3d is at tracker_
-//std::cout << "R_:\n" << R_ << "\nT_:\n" << T_ << std::endl;
+
     tracker_->updatePreFeatures(leftKeypoints, leftDescriptors, points3d);
 
 }
 
-void System::calculateCurPose(const size_t i) {
+void System::calculateCurPose() {
     Eigen::Matrix<double, 3, 4> curEstPose_inhomo;
     Eigen::Matrix4d curEstPose_homo = Eigen::Matrix4d::Zero();
-    curEstPose_inhomo << R_.transpose(), -R_.transpose()*T_;
+    curEstPose_inhomo << R_.transpose(), -R_.transpose() * T_;
     curEstPose_homo.topRows(3) = curEstPose_inhomo;
     curEstPose_homo(3, 3) = 1;
 
-//std::cout << "curEstPose_homo: \n" << curEstPose_homo << std::endl;
-//std::cout << "curEstPose_: \n" << curEstPose_ << std::endl;
     curEstPose_ = curEstPose_ * curEstPose_homo;
     estPoses_.push_back(curEstPose_);
 
-    curRealPose_ = dataset_->posesGroundTruth_[i];
 }
 
 void System::showTrajectory(const std::string &windowName, cv::Mat &whiteboard) {
 //std::cout << "Current estimated pose: \n" << curEstPose_ << std::endl;
+    curRealPose_ = dataset_->getPoseGroundTruth(curImageNo);
     cv::Point2d pointEst(curEstPose_(2, 3) + 500, curEstPose_(0, 3) + 500);
     cv::Point2d pointGT(curRealPose_(2, 3) + 500, curRealPose_(0, 3) + 500);
 //std::cout << "point: \n" << "(" << pointEst.x - 500 << ", " << pointEst.y - 500 << ")" << std::endl;
@@ -101,5 +96,7 @@ void System::showTrajectory(const std::string &windowName, cv::Mat &whiteboard) 
     cv::imshow(windowName, whiteboard);
     cv::waitKey(5);
 }
+
+void System::logInfo() {}
 
 }

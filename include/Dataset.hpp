@@ -12,9 +12,11 @@ class Dataset{
 public:
     Dataset(const std::string &strPathToSequence, const std::string &sequenceNo = "-1");
     int getImagesAmount() const;
+    const std::string getStrImage(const int i, const bool isLeft) const;
+    const double getTimestamps(const int i) const;
+    const Eigen::Matrix<double, 3, 4> getPoseGroundTruth(const int i) const;
 
 private:
-    friend class System;
     std::vector<std::string> strImageLeft_;
     std::vector<std::string> strImageRight_;
     std::vector<double> timestamps_;

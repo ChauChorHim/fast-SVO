@@ -15,12 +15,13 @@ namespace fast_SVO
 class Module {
 public:
     Module();
-    virtual ~Module();
+    virtual ~Module() {};
     virtual void logInfo() = 0;
+    float getRunTime() { return moduleRunTime_; }
 
 private:
     Timer moduleTimer_;
-    std::shared_ptr<float> moduleRunTime_;
+    float moduleRunTime_;
 };
 
     

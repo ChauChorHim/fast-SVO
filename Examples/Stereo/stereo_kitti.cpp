@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
         std::cout << std::endl << "----------------frame " << i << "----------------" << std::endl << std::endl;
         SVO.trackStereo();
         if (i != 0) {
-            SVO.calculateCurPose(i); // combine current R and T to the previous Rs and Ts
+            SVO.calculateCurPose(); // combine current R and T to the previous Rs and Ts
             SVO.showTrajectory(windowName, whiteboard);
         }
     }

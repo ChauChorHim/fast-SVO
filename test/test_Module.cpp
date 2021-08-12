@@ -1,8 +1,6 @@
-/* This is a test file for class Timer */
-
+#include <iostream>
 #include <chrono>
 #include <memory>
-#include <iostream>
 
 class Timer {
 public:
@@ -25,18 +23,29 @@ Timer::~Timer() {
     *runTime_ = duration.count() * 1000.0f;
 }
 
-void test_timer_cost(int nums, float &runTime) {
-    float oneRunTime = 0;
-    Timer timer = Timer(runTime);
-    for (int i = 0; i < nums; ++i) {
-        Timer oneTimer = Timer(oneRunTime);
+class Module {
+public:
+    Module() : moduleRunTime_{0}, moduleTimer_{Timer(moduleRunTime_)} { std::cout << "Module()\n"; }
+    virtual ~Module() { std::cout << "~Module()\n"; }
+    virtual void logInfo() = 0;
+    float getRunTime() { return moduleRunTime_; }
+
+private:
+    Timer moduleTimer_;
+    float moduleRunTime_;
+};
+
+class Derived : public Module {
+public:
+    Derived() : Module() { std::cout << "Derived()\n"; }
+    ~Derived() { std::cout << "~Derived()\n Takes time: " << getRunTime() << "\n"; }
+    void logInfo() {
+        std::cout << "Derived: logInfo()\n";
     }
-}
+};
 
 int main() {
-    float runTime = 0;
-    int nums = 100000;
-    test_timer_cost(nums, runTime);
-    std::cout << nums << " Timer construct and destruct takes " << runTime << " ms\n";
+    Derived derived = Derived();
+    derived.logInfo();
     return 0;
 }
