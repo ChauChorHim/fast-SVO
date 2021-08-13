@@ -6,6 +6,7 @@
 #include "Dataset.hpp"
 #include "Tracking.hpp"
 #include "Module.hpp"
+#include "Timer.hpp"
 
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -63,8 +64,6 @@ public:
     void logInfo();
 
 };
-
-
 
 }// namespace fast_SVO
 

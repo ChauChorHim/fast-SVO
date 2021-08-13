@@ -31,9 +31,7 @@ System::System(const Dataset *dataset, const std::string &strSettingFile, const 
     estPoses_.reserve(dataset_->getImagesAmount() + 1);
 }
 
-System::~System() {
-    delete tracker_;
-}
+System::~System() { }
 
 /**
  * @description: This function update the left and right image for the System by reading the corresponding images path

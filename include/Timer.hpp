@@ -1,21 +1,37 @@
 #ifndef TIMER
 #define TIMER
 
+#include <ctime>
 #include <chrono>
 
 namespace fast_SVO
 {
 
-// Timer constructor needs std::shared_ptr<float> runTime to store the run time.
-// After the Timer object destruct, runTime will be modified.
 class Timer {
-public:
-    Timer(float &runTime);
-    ~Timer();
-
 private:
-    std::chrono::time_point<std::chrono::high_resolution_clock> start_, end_;
-    float *runTime_;
+    float runTime_;
+    std::chrono::time_point<std::chrono::high_resolution_clock> initTime_;
+
+public:
+    Timer();
+    virtual ~Timer();
+    std::chrono::time_point<std::chrono::high_resolution_clock> getInitTime() { return initTime_; }
+};
+
+/* ----------------------------------------------------------------------------- */
+
+class LoopTimer : public Timer {
+private:
+    std::chrono::time_point<std::chrono::high_resolution_clock> startTime_;
+    std::chrono::time_point<std::chrono::high_resolution_clock> pauseTime_;
+    bool isPause_;
+public:
+    LoopTimer();
+    ~LoopTimer();
+    bool isPause() { return isPause_ ? true : false; }
+    void start();
+    void pause();
+    void stop();
 };
 
 } // namespace fast_SVO

@@ -17,11 +17,9 @@ public:
     Module();
     virtual ~Module() {};
     virtual void logInfo() = 0;
-    float getRunTime() { return moduleRunTime_; }
 
 private:
-    Timer moduleTimer_;
-    float moduleRunTime_;
+    LoopTimer moduleTimer_;
 };
 
     

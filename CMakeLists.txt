@@ -73,7 +73,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
 #    test/test_Timer.cpp
 #)
 
-add_executable(
-    test_Module
-    test/test_Module.cpp 
-)
+#add_executable(
+#    test_Module
+#    test/test_Module.cpp 
+#)

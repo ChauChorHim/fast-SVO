@@ -2,6 +2,6 @@
 
 namespace fast_SVO
 {
-    Module::Module() : moduleRunTime_{0}, moduleTimer_{Timer(moduleRunTime_)} {}
+    Module::Module() : moduleTimer_{LoopTimer()} {}
 
 } // namespace fast_SVO
