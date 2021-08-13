@@ -14,7 +14,7 @@
 namespace fast_SVO
 {
 
-class System final : public Module
+class System
 {
 public:
     // Input dataset
@@ -48,6 +48,10 @@ private:
     //-- Current real pose
     Eigen::Matrix<double, 3, 4> curRealPose_;
 
+    //-- looptimer for timing the process to improve efficiency
+    LoopTimer loopTimer;
+
+    //-- Record used time of some time-comsuing process
 public:
     System(const Dataset *dataset, const std::string &strSettingFile, const DatasetType datasetType);
 

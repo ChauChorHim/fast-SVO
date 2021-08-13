@@ -14,12 +14,13 @@ namespace fast_SVO
 {
 class Module {
 public:
-    Module();
+    explicit Module();
+    explicit Module(const std::string &msg);
     virtual ~Module() {};
     virtual void logInfo() = 0;
 
 private:
-    LoopTimer moduleTimer_;
+    Timer moduleTimer_;
 };
 
     

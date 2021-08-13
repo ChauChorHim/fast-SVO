@@ -17,12 +17,12 @@
 namespace fast_SVO
 {
 
-class Tracking final : public Module{
+class Tracking {
 
 public:
     Tracking(const std::string &strSettingFile);
 
-    void updateImagesFeatures(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp, 
+    void updateCurFeatures(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp, 
                               std::vector<cv::KeyPoint> &leftKeypoints, std::vector<cv::KeyPoint> &rightKeypoints,
                               cv::Mat &leftDescriptors, cv::Mat &rightDescriptors);
 

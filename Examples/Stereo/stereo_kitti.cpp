@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
     whiteboard.setTo(255);
 
     // Main loop
-    for (int i = 0; i < imagesAmount; ++i) {
+    for (int i = 0; i < 50; ++i) {
     //for (int i = 0; i < 2; ++i) {
         tframe = SVO.updateImages(i); // update the images pair to No. ni
 

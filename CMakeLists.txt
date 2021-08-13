@@ -34,7 +34,6 @@ add_library(
     src/Tracking.cpp
     src/Solver.cpp
     src/Timer.cpp
-    src/Module.cpp
 )
 
 

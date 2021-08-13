@@ -11,7 +11,7 @@ namespace fast_SVO
 {
 
 System::System(const Dataset *dataset, const std::string &strSettingFile, const DatasetType datasetType) : 
-                Module(), datasetType_(datasetType), dataset_(dataset) {
+                datasetType_{datasetType}, dataset_{dataset}, loopTimer{LoopTimer("SVO system")} {
 
     //Check settings file path
     cv::FileStorage fsSettings(strSettingFile.c_str(), cv::FileStorage::READ);
@@ -31,7 +31,7 @@ System::System(const Dataset *dataset, const std::string &strSettingFile, const 
     estPoses_.reserve(dataset_->getImagesAmount() + 1);
 }
 
-System::~System() { }
+System::~System() {}
 
 /**
  * @description: This function update the left and right image for the System by reading the corresponding images path
@@ -57,7 +57,9 @@ void System::trackStereo() {
     cv::Mat leftDescriptors;
     cv::Mat rightDescriptors;
 
-    tracker_->updateImagesFeatures(curImLeft_, curImRight_, curTimestamp_, leftKeypoints, rightKeypoints, leftDescriptors, rightDescriptors);
+    loopTimer.start();
+    tracker_->updateCurFeatures(curImLeft_, curImRight_, curTimestamp_, leftKeypoints, rightKeypoints, leftDescriptors, rightDescriptors);
+    loopTimer.pause();
 
     std::vector<cv::DMatch> matches;
     Eigen::Matrix4Xd points3d;

@@ -8,11 +8,11 @@
 namespace fast_SVO
 {
 
-Tracking::Tracking(const std::string &strSettingFile) : Module(), state_{NOT_INITIALIZED} {
+Tracking::Tracking(const std::string &strSettingFile) : state_{NOT_INITIALIZED} {
     initTracker(strSettingFile);
 }
 
-void Tracking::updateImagesFeatures(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp, 
+void Tracking::updateCurFeatures(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp, 
                                     std::vector<cv::KeyPoint> &leftKeypoints, std::vector<cv::KeyPoint> &rightKeypoints, 
                                     cv::Mat &leftDescriptors, cv::Mat &rightDescriptors) {
     ORBextractorLeft_->detectAndCompute(imRectLeft, cv::noArray(), leftKeypoints, leftDescriptors);    
