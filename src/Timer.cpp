@@ -2,9 +2,10 @@
 #include <iostream>
 
 namespace fast_SVO {
-void LoopTimer::showTiming(std::chrono::time_point<std::chrono::high_resolution_clock> *time, const std::string &msg) {
-    endTime_ = std::chrono::high_resolution_clock::now();
-    duration_  = endTime_ - *time;
+void LoopTimer::showTiming(std::chrono::time_point<std::chrono::high_resolution_clock> *time0, 
+                           std::chrono::time_point<std::chrono::high_resolution_clock> *time1,
+                           const std::string &msg) {
+    duration_  = *time1 - *time0;
     std::string unit;
     if (duration_.count() < 0.000001) {
         runTime_ = duration_.count() * 1000000000;
@@ -38,7 +39,8 @@ LoopTimer::LoopTimer(const std::string &msg) :
 
 LoopTimer::~LoopTimer() {
     //msg_ = "------------------------------------------\ntotal " + msg_;
-    showTiming(&startTime_, msg_);
+    endTime_ = std::chrono::high_resolution_clock::now();
+    showTiming(&startTime_, &endTime_, msg_);
 }
 
 void LoopTimer::start() {
@@ -55,5 +57,12 @@ void LoopTimer::pause() {
         isPause_ = true;
         pauseTime_ = std::chrono::high_resolution_clock::now();
     }
-} 
+}     
+std::chrono::time_point<std::chrono::high_resolution_clock>* LoopTimer::getStartTime() {
+    return &startTime_;
+}
+
+std::chrono::time_point<std::chrono::high_resolution_clock>* LoopTimer::getPauseTime() {
+    return &pauseTime_;
+}
 }

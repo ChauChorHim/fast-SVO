@@ -33,20 +33,22 @@ int main(int argc, char **argv) {
     cv::Mat whiteboard = cv::Mat::zeros(cv::Size(1000, 1000), CV_8UC3);
     whiteboard.setTo(255);
 
-    fast_SVO::LoopTimer loopTimer = fast_SVO::LoopTimer("main loop");
-    loopTimer.start();
+    fast_SVO::LoopTimer mainTimer = fast_SVO::LoopTimer("\n\nMAIN TIMER");
 
     // Main loop
     for (int i = 0; i < 50; ++i) {
-    //for (int i = 0; i < 2; ++i) {
+        mainTimer.start();
         tframe = SVO.updateImages(i); // update the images pair to No. ni
 
         std::cout << std::endl << "----------------frame " << i << "----------------" << std::endl << std::endl;
+        std::cout << "TIMESTAMP: " << tframe << std::endl;
         SVO.trackStereo();
         if (i != 0) {
             SVO.calculateCurPose(); // combine current R and T to the previous Rs and Ts
             SVO.showTrajectory(windowName, whiteboard);
         }
+        mainTimer.pause();
+        mainTimer.showTiming(mainTimer.getStartTime(), mainTimer.getPauseTime(), "mainTimer");
     }
 
     return 0;

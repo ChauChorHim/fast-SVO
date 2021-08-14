@@ -21,10 +21,14 @@ private:
 public:
     explicit LoopTimer(const std::string &msg);
     ~LoopTimer();
-    void showTiming(std::chrono::time_point<std::chrono::high_resolution_clock> *time, const std::string &msg);
+    void showTiming(std::chrono::time_point<std::chrono::high_resolution_clock> *time0, 
+                    std::chrono::time_point<std::chrono::high_resolution_clock> *time1,
+                    const std::string &msg);
     bool isPause() { return isPause_ ? true : false; }
     void start();
     void pause();
+    std::chrono::time_point<std::chrono::high_resolution_clock>* getStartTime();
+    std::chrono::time_point<std::chrono::high_resolution_clock>* getPauseTime();
 };
 
 } // namespace fast_SVO
