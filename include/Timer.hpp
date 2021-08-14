@@ -8,34 +8,20 @@
 namespace fast_SVO
 {
 
-class Timer {
-private:
-    double runTime_;
-    std::chrono::time_point<std::chrono::high_resolution_clock> initTime_;
-    std::string msg_;
-
-protected:
-    void showTiming(const std::string &msg);
-
-public:
-    explicit Timer();
-    explicit Timer(const std::string &msg);
-    virtual ~Timer();
-    std::chrono::time_point<std::chrono::high_resolution_clock> getInitTime() { return initTime_; }
-};
-
-/* ----------------------------------------------------------------------------- */
-
-class LoopTimer : public Timer {
+class LoopTimer{
 private:
     std::chrono::time_point<std::chrono::high_resolution_clock> startTime_;
     std::chrono::time_point<std::chrono::high_resolution_clock> pauseTime_;
+    std::chrono::time_point<std::chrono::high_resolution_clock> endTime_;
+    std::chrono::duration<double> duration_;
     bool isPause_;
+    double runTime_;
     std::string msg_;
 
 public:
     explicit LoopTimer(const std::string &msg);
     ~LoopTimer();
+    void showTiming(std::chrono::time_point<std::chrono::high_resolution_clock> *time, const std::string &msg);
     bool isPause() { return isPause_ ? true : false; }
     void start();
     void pause();

@@ -4,7 +4,6 @@
 #include <string>
 
 #include "Solver.hpp"
-#include "Module.hpp"
 #include "Timer.hpp"
 
 #define OPENCV_TRAITS_ENABLE_DEPRECATED

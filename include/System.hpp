@@ -5,7 +5,6 @@
 
 #include "Dataset.hpp"
 #include "Tracking.hpp"
-#include "Module.hpp"
 #include "Timer.hpp"
 
 #include "opencv2/highgui/highgui.hpp"
@@ -27,7 +26,7 @@ private:
     const DatasetType datasetType_;
     const Dataset* dataset_;
 
-    size_t curImageNo;
+    size_t curImageNo_;
 
     cv::Mat curImLeft_, curImRight_;
     double curTimestamp_ = 0;
@@ -49,7 +48,7 @@ private:
     Eigen::Matrix<double, 3, 4> curRealPose_;
 
     //-- looptimer for timing the process to improve efficiency
-    LoopTimer loopTimer;
+    std::vector<LoopTimer> loopTimers_;
 
     //-- Record used time of some time-comsuing process
 public:

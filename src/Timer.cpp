@@ -2,51 +2,43 @@
 #include <iostream>
 
 namespace fast_SVO {
-Timer::Timer() : runTime_{0}, initTime_{std::chrono::high_resolution_clock::now()}, msg_("") {}
-Timer::Timer(const std::string &msg) : runTime_{0}, initTime_{std::chrono::high_resolution_clock::now()}, msg_(msg) {}
-void Timer::showTiming(const std::string &msg) {
-    auto endTime = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> duration {endTime - initTime_};
+void LoopTimer::showTiming(std::chrono::time_point<std::chrono::high_resolution_clock> *time, const std::string &msg) {
+    endTime_ = std::chrono::high_resolution_clock::now();
+    duration_  = endTime_ - *time;
     std::string unit;
-    if (duration.count() < 0.000001) {
-        runTime_ = duration.count() * 1000000000;
+    if (duration_.count() < 0.000001) {
+        runTime_ = duration_.count() * 1000000000;
         unit = "ns";
-    } else if (duration.count()< 0.001) {
-        runTime_ = duration.count() * 1000000;
+    } else if (duration_.count()< 0.001) {
+        runTime_ = duration_.count() * 1000000;
         unit = "us";
-    } else if (duration.count() < 1) {
-        runTime_ = duration.count() * 1000;
+    } else if (duration_.count() < 1) {
+        runTime_ = duration_.count() * 1000;
         unit = "ms";
-    } else if (duration.count() > 60) {
-        runTime_ = duration.count() / 60;
+    } else if (duration_.count() > 60) {
+        runTime_ = duration_.count() / 60;
         unit = "m";
-    } else if (duration.count() > 86400) {
-        runTime_ = duration.count() / 360;
+    } else if (duration_.count() > 86400) {
+        runTime_ = duration_.count() / 360;
         unit = "h";
     } else {
-        runTime_ = duration.count();
+        runTime_ = duration_.count();
         unit = "s";
     }
     std::cout << msg << " spend time: " << runTime_ << " " << unit << std::endl;
 }
-Timer::~Timer() {
-    if (msg_ != "") {
-        showTiming(msg_);     
-    }
-    
-}
 
-/* --------------------------------------------------- */
-
-LoopTimer::LoopTimer(const std::string &msg) : Timer(), 
-                         startTime_{std::chrono::high_resolution_clock::now()}, 
-                         pauseTime_{std::chrono::high_resolution_clock::now()}, 
-                         isPause_{false}, 
-                         msg_(msg) {}
+LoopTimer::LoopTimer(const std::string &msg) :  
+                     startTime_{std::chrono::high_resolution_clock::now()}, 
+                     pauseTime_{std::chrono::high_resolution_clock::now()}, 
+                     endTime_{std::chrono::high_resolution_clock::now()}, 
+                     isPause_{false}, 
+                     runTime_{0},
+                     msg_{msg} {}
 
 LoopTimer::~LoopTimer() {
     //msg_ = "------------------------------------------\ntotal " + msg_;
-    showTiming(msg_);
+    showTiming(&startTime_, msg_);
 }
 
 void LoopTimer::start() {

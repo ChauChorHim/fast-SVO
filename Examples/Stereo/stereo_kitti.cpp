@@ -3,6 +3,7 @@
 
 #include "Dataset.hpp"
 #include "System.hpp"
+#include "Timer.hpp"
 
 int main(int argc, char **argv) {
     if (argc != 4) {
@@ -31,6 +32,9 @@ int main(int argc, char **argv) {
     cv::namedWindow(windowName);
     cv::Mat whiteboard = cv::Mat::zeros(cv::Size(1000, 1000), CV_8UC3);
     whiteboard.setTo(255);
+
+    fast_SVO::LoopTimer loopTimer = fast_SVO::LoopTimer("main loop");
+    loopTimer.start();
 
     // Main loop
     for (int i = 0; i < 50; ++i) {
