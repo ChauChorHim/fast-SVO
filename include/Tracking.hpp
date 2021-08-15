@@ -21,9 +21,13 @@ class Tracking {
 public:
     Tracking(const std::string &strSettingFile);
 
-    void updateCurFeatures(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp, 
-                              std::vector<cv::KeyPoint> &leftKeypoints, std::vector<cv::KeyPoint> &rightKeypoints,
-                              cv::Mat &leftDescriptors, cv::Mat &rightDescriptors);
+/*    void updateCurFeatures(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double timestamp, 
+                           std::vector<cv::KeyPoint> &leftKeypoints, std::vector<cv::KeyPoint> &rightKeypoints,
+                           cv::Mat &leftDescriptors, cv::Mat &rightDescriptors);
+                           */
+    void updateCurFeatures(bool isLeft, cv::Mat &imRect, 
+                           std::vector<cv::KeyPoint> &keypoints,
+                           cv::Mat &descriptors);
 
     void matchStereoFeaturesNaive(std::vector<cv::KeyPoint> &leftKeypoints, std::vector<cv::KeyPoint> &rightKeypoints,
                                   cv::Mat &leftDescriptors, cv::Mat &rightDescriptors, std::vector<cv::DMatch> &matches,
@@ -86,6 +90,9 @@ private:
 
     // Initialize function
     void initTracker(const std::string &strSettingFile);
+
+    // A handle function for multi thread in detect image features
+    void detectFeatures(cv::Ptr<cv::ORB> &ORBextractor, const cv::Mat &imRect, std::vector<cv::KeyPoint> &keypoints, cv::Mat &leftDescriptors);
 };
 }
 

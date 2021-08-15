@@ -2,6 +2,7 @@
 #include <tuple>
 #include <chrono>
 #include <vector>
+#include <thread>
 
 #include "System.hpp"
 
@@ -13,7 +14,8 @@ namespace fast_SVO
 System::System(const Dataset *dataset, const std::string &strSettingFile, const DatasetType datasetType) : 
                 datasetType_{datasetType}, 
                 dataset_{dataset}, 
-                loopTimers_{LoopTimer("updateCurFeatures"), LoopTimer("matchStereoFeaturesNaive"), LoopTimer("matchFeaturesNaive")} {
+                loopTimers_{LoopTimer("updateCurFeatures"), LoopTimer("matchStereoFeaturesNaive"), LoopTimer("matchFeaturesNaive")},
+                tracker_{Tracking(strSettingFile)} {
 
     //Check settings file path
     cv::FileStorage fsSettings(strSettingFile.c_str(), cv::FileStorage::READ);
@@ -22,7 +24,6 @@ System::System(const Dataset *dataset, const std::string &strSettingFile, const 
         exit(-1);
     }
 
-    tracker_ = new Tracking(strSettingFile);
     curEstPose_ << 1, 0, 0, 0,
                    0, 1, 0, 0, 
                    0, 0, 1, 0,
@@ -61,27 +62,31 @@ void System::trackStereo() {
     cv::Mat rightDescriptors;
 
     loopTimers_[0].start();
-    tracker_->updateCurFeatures(curImLeft_, curImRight_, curTimestamp_, leftKeypoints, rightKeypoints, leftDescriptors, rightDescriptors);
+//    tracker_.updateCurFeatures(curImLeft_, curImRight_, curTimestamp_, leftKeypoints, rightKeypoints, leftDescriptors, rightDescriptors);
+    std::thread leftThread(&Tracking::updateCurFeatures, &tracker_, true, std::ref(curImLeft_), std::ref(leftKeypoints), std::ref(leftDescriptors));
+    std::thread rightThread(&Tracking::updateCurFeatures, &tracker_, false, std::ref(curImRight_), std::ref(rightKeypoints), std::ref(rightDescriptors));
+    leftThread.join();
+    rightThread.join();
     loopTimers_[0].pause();
 
     std::vector<cv::DMatch> matches;
     Eigen::Matrix4Xd points3d;
 
     loopTimers_[1].start();
-    tracker_->matchStereoFeaturesNaive(leftKeypoints, rightKeypoints, leftDescriptors, rightDescriptors, matches, points3d);
+    tracker_.matchStereoFeaturesNaive(leftKeypoints, rightKeypoints, leftDescriptors, rightDescriptors, matches, points3d);
     loopTimers_[1].pause();
 
-    tracker_->showMatches(curImLeft_, curImRight_, leftKeypoints, rightKeypoints, matches);
+    tracker_.showMatches(curImLeft_, curImRight_, leftKeypoints, rightKeypoints, matches);
 
     Eigen::Matrix3Xd points2d;
     
     loopTimers_[2].start();
-    tracker_->matchFeaturesNaive(leftKeypoints, leftDescriptors, matches, points2d);
+    tracker_.matchFeaturesNaive(leftKeypoints, leftDescriptors, matches, points2d);
     loopTimers_[2].pause();
 
-    tracker_->getTranform(R_, T_, points2d); // prePoints3d is at tracker_
+    tracker_.getTranform(R_, T_, points2d); // prePoints3d is at tracker_
 
-    tracker_->updatePreFeatures(leftKeypoints, leftDescriptors, points3d);
+    tracker_.updatePreFeatures(leftKeypoints, leftDescriptors, points3d);
 
 }
 

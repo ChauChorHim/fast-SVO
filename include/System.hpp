@@ -31,8 +31,11 @@ private:
     cv::Mat curImLeft_, curImRight_;
     double curTimestamp_ = 0;
 
+    //-- looptimer for timing the process to improve efficiency
+    std::vector<LoopTimer> loopTimers_;
+
     //-- Tracker. It receives a frame and computes the associated camera pose.
-    Tracking* tracker_;
+    Tracking tracker_;
 
     //-- Current 3D-2D estimated Rotation matrix and translation vector
     Eigen::Matrix3d R_; 
@@ -47,10 +50,7 @@ private:
     //-- Current real pose
     Eigen::Matrix<double, 3, 4> curRealPose_;
 
-    //-- looptimer for timing the process to improve efficiency
-    std::vector<LoopTimer> loopTimers_;
 
-    //-- Record used time of some time-comsuing process
 public:
     System(const Dataset *dataset, const std::string &strSettingFile, const DatasetType datasetType);
 
