@@ -538,7 +538,7 @@ class KittiEvalOdom():
             file_name = '{:02}.txt'.format(i)
 
             poses_result = self.load_poses_from_txt(result_dir+"/"+file_name)
-            poses_gt = self.load_poses_from_txt(self.gt_dir + "/" + file_name)
+            poses_gt = self.load_poses_from_txt(self.gt_dir + file_name)
             self.result_file_name = result_dir+file_name
 
             # Pose alignment to first frame

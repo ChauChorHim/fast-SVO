@@ -127,7 +127,12 @@ void System::saveTrajectory(const std::string &pathToResult, const std::string &
     fout.open(pathToResult + "/" + filename);
     for (auto matrix : estPoses_) {
         for (int i = 0; i < matrix.rows(); ++i)
-            fout << matrix.row(i) << " ";
+            for (int j = 0; j < matrix.cols(); ++j) {
+                if (i == matrix.rows() - 1 && j == matrix.cols() - 1)
+                    fout << matrix(i, j);
+                else
+                    fout << matrix(i, j) << " ";
+            }
         fout << std::endl;
     }
     fout.close();
@@ -140,12 +145,6 @@ void System::evaluateResult() {
         std::cout << "Py_IsInitialized != 1" <<std::endl;
         return;
     }
-    PyObject *pModule=NULL;
-    if(!(pModule=PyImport_Import(PyString_FromString("kitti-odom-eval-master/eval_odom.py")))) {
-        std::cout<<"get module failed!"<<std::endl;
-        exit(0);
-    }
-    
     Py_Finalize();
 }
 

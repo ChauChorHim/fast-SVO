@@ -36,7 +36,8 @@ int main(int argc, char **argv) {
     fast_SVO::LoopTimer mainTimer = fast_SVO::LoopTimer("\n\nMAIN TIMER");
 
     // Main loop
-    for (int i = 0; i < 50; ++i) {
+    //for (int i = 0; i < imagesAmount; ++i) {
+    for (int i = 0; i < imagesAmount; ++i) {
         tframe = SVO.updateImages(i); // update the images pair to No. ni
 
         std::cout << std::endl << "----------------frame " << i << "----------------" << std::endl << std::endl;
@@ -54,7 +55,7 @@ int main(int argc, char **argv) {
     }
     // Save the results to evaluate
     const std::string pathToResult {"."};
-    const std::string filename {"KITTI" + std::string(argv[3]) + ".txt"};
+    const std::string filename {std::string(argv[3]) + ".txt"};
     SVO.saveTrajectory(pathToResult, filename);
     //SVO.evaluateResult();
     return 0;
