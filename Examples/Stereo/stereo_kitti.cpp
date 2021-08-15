@@ -37,19 +37,25 @@ int main(int argc, char **argv) {
 
     // Main loop
     for (int i = 0; i < 50; ++i) {
-        mainTimer.start();
         tframe = SVO.updateImages(i); // update the images pair to No. ni
 
         std::cout << std::endl << "----------------frame " << i << "----------------" << std::endl << std::endl;
         std::cout << "TIMESTAMP: " << tframe << std::endl;
+        mainTimer.start();
+        if (i == 0)
+            SVO.resetAllTimers();
         SVO.trackStereo();
+        mainTimer.pause();
         if (i != 0) {
             SVO.calculateCurPose(); // combine current R and T to the previous Rs and Ts
             SVO.showTrajectory(windowName, whiteboard);
         }
-        mainTimer.pause();
         mainTimer.showTiming(mainTimer.getStartTime(), mainTimer.getPauseTime(), "mainTimer");
     }
+    // Save the results to evaluate
+    const std::string pathToResult {"."};
+    const std::string filename {"KITTI" + std::string(argv[3]) + ".txt"};
+    SVO.saveTrajectory(pathToResult, filename);
 
     return 0;
 }

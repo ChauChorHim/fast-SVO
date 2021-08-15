@@ -27,6 +27,7 @@ public:
     bool isPause() { return isPause_ ? true : false; }
     void start();
     void pause();
+    void reset();
     std::chrono::time_point<std::chrono::high_resolution_clock>* getStartTime();
     std::chrono::time_point<std::chrono::high_resolution_clock>* getPauseTime();
 };

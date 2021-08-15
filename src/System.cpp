@@ -1,8 +1,8 @@
 #include <iostream> // cerr
-#include <tuple>
 #include <chrono>
 #include <vector>
 #include <thread>
+#include <fstream>
 
 #include "System.hpp"
 
@@ -14,7 +14,7 @@ namespace fast_SVO
 System::System(const Dataset *dataset, const std::string &strSettingFile, const DatasetType datasetType) : 
                 datasetType_{datasetType}, 
                 dataset_{dataset}, 
-                loopTimers_{LoopTimer("updateCurFeatures"), LoopTimer("matchStereoFeaturesNaive"), LoopTimer("matchFeaturesNaive")},
+                loopTimers_{LoopTimer("updateCurFeatures"), LoopTimer("matchStereoFeaturesNaive"), LoopTimer("matchFeaturesNaive"), LoopTimer("getTransform"), LoopTimer("updateFeatures")},
                 tracker_{Tracking(strSettingFile)} {
 
     //Check settings file path
@@ -54,6 +54,12 @@ double System::updateImages(const int i) {
     return curTimestamp_; // used for checking the current time stamp
 }
 
+
+void System::resetAllTimers() {
+    for (auto timer : loopTimers_) 
+        timer.reset();
+}
+
 void System::trackStereo() {
     // Initializing keypoints and descriptors for each frame
     std::vector<cv::KeyPoint> leftKeypoints;
@@ -62,7 +68,6 @@ void System::trackStereo() {
     cv::Mat rightDescriptors;
 
     loopTimers_[0].start();
-//    tracker_.updateCurFeatures(curImLeft_, curImRight_, curTimestamp_, leftKeypoints, rightKeypoints, leftDescriptors, rightDescriptors);
     std::thread leftThread(&Tracking::updateCurFeatures, &tracker_, true, std::ref(curImLeft_), std::ref(leftKeypoints), std::ref(leftDescriptors));
     std::thread rightThread(&Tracking::updateCurFeatures, &tracker_, false, std::ref(curImRight_), std::ref(rightKeypoints), std::ref(rightDescriptors));
     leftThread.join();
@@ -76,7 +81,7 @@ void System::trackStereo() {
     tracker_.matchStereoFeaturesNaive(leftKeypoints, rightKeypoints, leftDescriptors, rightDescriptors, matches, points3d);
     loopTimers_[1].pause();
 
-    tracker_.showMatches(curImLeft_, curImRight_, leftKeypoints, rightKeypoints, matches);
+    //tracker_.showMatches(curImLeft_, curImRight_, leftKeypoints, rightKeypoints, matches);
 
     Eigen::Matrix3Xd points2d;
     
@@ -84,9 +89,13 @@ void System::trackStereo() {
     tracker_.matchFeaturesNaive(leftKeypoints, leftDescriptors, matches, points2d);
     loopTimers_[2].pause();
 
+    loopTimers_[3].start();
     tracker_.getTranform(R_, T_, points2d); // prePoints3d is at tracker_
+    loopTimers_[3].pause();
 
+    loopTimers_[4].start();
     tracker_.updatePreFeatures(leftKeypoints, leftDescriptors, points3d);
+    loopTimers_[4].pause();
 
 }
 
@@ -103,18 +112,25 @@ void System::calculateCurPose() {
 }
 
 void System::showTrajectory(const std::string &windowName, cv::Mat &whiteboard) {
-//std::cout << "Current estimated pose: \n" << curEstPose_ << std::endl;
     curRealPose_ = dataset_->getPoseGroundTruth(curImageNo_);
     cv::Point2d pointEst(curEstPose_(2, 3) + 500, curEstPose_(0, 3) + 500);
     cv::Point2d pointGT(curRealPose_(2, 3) + 500, curRealPose_(0, 3) + 500);
-//std::cout << "point: \n" << "(" << pointEst.x - 500 << ", " << pointEst.y - 500 << ")" << std::endl;
-//std::cout << "real point: \n" << "(" << pointGT.x << ", " << pointGT.y << ")" << std::endl;
     cv::circle(whiteboard, pointEst, 1, cv::Scalar(0, 0, 255), -1);
     cv::circle(whiteboard, pointGT, 1, cv::Scalar(255, 0, 0), -1);
     cv::imshow(windowName, whiteboard);
-    cv::waitKey(5);
+    cv::waitKey(1);
 }
 
-void System::logInfo() {}
+void System::saveTrajectory(const std::string &pathToResult, const std::string &filename) {
+    std::ofstream fout;
+    fout.open(pathToResult + "/" + filename);
+    for (auto matrix : estPoses_) {
+        for (int i = 0; i < matrix.rows(); ++i)
+            fout << matrix.row(i) << " ";
+        fout << std::endl;
+    }
+    fout.close();
+}
+
 
 }

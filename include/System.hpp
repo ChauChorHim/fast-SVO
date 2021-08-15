@@ -58,13 +58,15 @@ public:
     
     double updateImages(const int i);
 
+    void resetAllTimers();
+
     void trackStereo();
 
     void calculateCurPose();
 
     void showTrajectory(const std::string &windowName, cv::Mat &whiteboard);
 
-    void logInfo();
+    void saveTrajectory(const std::string &pathToResult, const std::string &filename);
 
 };
 

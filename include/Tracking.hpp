@@ -21,10 +21,6 @@ class Tracking {
 public:
     Tracking(const std::string &strSettingFile);
 
-/*    void updateCurFeatures(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double timestamp, 
-                           std::vector<cv::KeyPoint> &leftKeypoints, std::vector<cv::KeyPoint> &rightKeypoints,
-                           cv::Mat &leftDescriptors, cv::Mat &rightDescriptors);
-                           */
     void updateCurFeatures(bool isLeft, cv::Mat &imRect, 
                            std::vector<cv::KeyPoint> &keypoints,
                            cv::Mat &descriptors);

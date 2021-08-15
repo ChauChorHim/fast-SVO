@@ -11,16 +11,6 @@ Tracking::Tracking(const std::string &strSettingFile) : state_{NOT_INITIALIZED} 
     initTracker(strSettingFile);
 }
 
-/*void Tracking::updateCurFeatures(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double timestamp, 
-                                 std::vector<cv::KeyPoint> &leftKeypoints, std::vector<cv::KeyPoint> &rightKeypoints,
-                                 cv::Mat &leftDescriptors, cv::Mat &rightDescriptors) {
-    ORBextractorLeft_->detectAndCompute(imRectLeft, cv::noArray(), leftKeypoints, leftDescriptors);    
-    ORBextractorRight_->detectAndCompute(imRectRight, cv::noArray(), rightKeypoints, rightDescriptors);    
-    //std::thread leftThread(&Tracking::detectFeatures, std::ref(ORBextractorLeft_), std::ref(imRectLeft), std::ref(leftKeypoints), std::ref(leftKeypoints));
-    //std::thread rightThread(&Tracking::detectFeatures, std::ref(ORBextractorRight_), std::ref(imRectRight), std::ref(rightKeypoints), std::ref(rightKeypoints));
-    //leftThread.join();
-    //rightThread.join();
-}*/
 void Tracking::updateCurFeatures(bool isLeft, cv::Mat &imRect, 
                        std::vector<cv::KeyPoint> &keypoints,
                        cv::Mat &descriptors) {

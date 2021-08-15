@@ -58,6 +58,10 @@ void LoopTimer::pause() {
         pauseTime_ = std::chrono::high_resolution_clock::now();
     }
 }     
+void LoopTimer::reset() {
+    isPause_ = true;
+    startTime_ = std::chrono::high_resolution_clock::now();
+}
 std::chrono::time_point<std::chrono::high_resolution_clock>* LoopTimer::getStartTime() {
     return &startTime_;
 }
