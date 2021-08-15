@@ -3,6 +3,7 @@
 #include <vector>
 #include <thread>
 #include <fstream>
+#include "python2.7/Python.h"
 
 #include "System.hpp"
 
@@ -130,6 +131,22 @@ void System::saveTrajectory(const std::string &pathToResult, const std::string &
         fout << std::endl;
     }
     fout.close();
+}
+
+void System::evaluateResult() {
+    Py_Initialize();
+
+    if(!Py_IsInitialized()) {
+        std::cout << "Py_IsInitialized != 1" <<std::endl;
+        return;
+    }
+    PyObject *pModule=NULL;
+    if(!(pModule=PyImport_Import(PyString_FromString("kitti-odom-eval-master/eval_odom.py")))) {
+        std::cout<<"get module failed!"<<std::endl;
+        exit(0);
+    }
+    
+    Py_Finalize();
 }
 
 

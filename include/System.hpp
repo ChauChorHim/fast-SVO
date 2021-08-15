@@ -68,6 +68,8 @@ public:
 
     void saveTrajectory(const std::string &pathToResult, const std::string &filename);
 
+    void evaluateResult();
+
 };
 
 }// namespace fast_SVO

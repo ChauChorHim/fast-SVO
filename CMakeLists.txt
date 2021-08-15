@@ -23,6 +23,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/include
     ${OpenCV_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
+    /usr/include/python3.6
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -50,8 +51,13 @@ target_link_libraries(
     stereo_kitti
     ${OpenCV_LIBS}
     ${EIGEN3_LIBS}
+
+    ${PROJECT_NAME}
+
+    /usr/lib/x86_64-linux-gnu/libboost_python-py36.so
+    /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+    /usr/lib/x86_64-linux-gnu/libpython3.6m.so
 )
-target_link_libraries(stereo_kitti ${PROJECT_NAME})
 
 
 # Test

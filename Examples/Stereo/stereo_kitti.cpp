@@ -56,6 +56,6 @@ int main(int argc, char **argv) {
     const std::string pathToResult {"."};
     const std::string filename {"KITTI" + std::string(argv[3]) + ".txt"};
     SVO.saveTrajectory(pathToResult, filename);
-
+    //SVO.evaluateResult();
     return 0;
 }
