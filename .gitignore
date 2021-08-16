@@ -38,3 +38,5 @@
 *.swp
 
 /docs/
+
+/Examples/Stereo/kitti-odom-eval-master/
