@@ -64,7 +64,7 @@ void Dataset::loadImages(const std::string &strPathToSequence) {
 
 void Dataset::loadTruePoses(const std::string &strPathToSequence, const std::string &sequenceNo) {
     std::string pathToFile = strPathToSequence + std::string("/poses/") + sequenceNo + std::string(".txt");
-    std::cout << pathToFile << std::endl;
+    //std::cout << pathToFile << std::endl;
     std::ifstream fin(pathToFile);
     std::string tmp;
     std::vector<std::string> posesGT;

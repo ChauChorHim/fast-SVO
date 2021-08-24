@@ -3,7 +3,6 @@
 #include <vector>
 #include <thread>
 #include <fstream>
-#include "python2.7/Python.h"
 
 #include "System.hpp"
 
@@ -15,8 +14,9 @@ namespace fast_SVO
 System::System(const Dataset *dataset, const std::string &strSettingFile, const DatasetType datasetType) : 
                 datasetType_{datasetType}, 
                 dataset_{dataset}, 
-                loopTimers_{LoopTimer("updateCurFeatures"), LoopTimer("matchStereoFeaturesNaive"), LoopTimer("matchFeaturesNaive"), LoopTimer("getTransform"), LoopTimer("updateFeatures")},
+                loopTimers_{LoopTimer("updateCurFeatures"), LoopTimer("matchStereoFeaturesNaive"), LoopTimer("matchFeaturesNaive"), LoopTimer("getTransform"), LoopTimer("updatePreFeatures")},
                 tracker_{Tracking(strSettingFile)} {
+    
 
     //Check settings file path
     cv::FileStorage fsSettings(strSettingFile.c_str(), cv::FileStorage::READ);
@@ -57,8 +57,8 @@ double System::updateImages(const int i) {
 
 
 void System::resetAllTimers() {
-    for (auto timer : loopTimers_) 
-        timer.reset();
+    for (int i = 0; i < loopTimers_.size(); ++i)
+        loopTimers_[i].reset();
 }
 
 void System::trackStereo() {
@@ -71,6 +71,8 @@ void System::trackStereo() {
     loopTimers_[0].start();
     std::thread leftThread(&Tracking::updateCurFeatures, &tracker_, true, std::ref(curImLeft_), std::ref(leftKeypoints), std::ref(leftDescriptors));
     std::thread rightThread(&Tracking::updateCurFeatures, &tracker_, false, std::ref(curImRight_), std::ref(rightKeypoints), std::ref(rightDescriptors));
+    //tracker_.updateCurFeatures(true, curImLeft_, leftKeypoints, leftDescriptors);
+    //tracker_.updateCurFeatures(false, curImRight_, rightKeypoints, leftDescriptors);
     leftThread.join();
     rightThread.join();
     loopTimers_[0].pause();
@@ -126,9 +128,9 @@ void System::saveTrajectory(const std::string &pathToResult, const std::string &
     std::ofstream fout;
     fout.open(pathToResult + "/" + filename);
     for (auto matrix : estPoses_) {
-        for (int i = 0; i < matrix.rows(); ++i)
+        for (int i = 0; i < matrix.rows() - 1; ++i)
             for (int j = 0; j < matrix.cols(); ++j) {
-                if (i == matrix.rows() - 1 && j == matrix.cols() - 1)
+                if (i == matrix.rows() - 2 && j == matrix.cols() - 1)
                     fout << matrix(i, j);
                 else
                     fout << matrix(i, j) << " ";
@@ -137,16 +139,5 @@ void System::saveTrajectory(const std::string &pathToResult, const std::string &
     }
     fout.close();
 }
-
-void System::evaluateResult() {
-    Py_Initialize();
-
-    if(!Py_IsInitialized()) {
-        std::cout << "Py_IsInitialized != 1" <<std::endl;
-        return;
-    }
-    Py_Finalize();
-}
-
 
 }

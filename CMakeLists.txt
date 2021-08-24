@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(fast_SVO)
 
-SET(CMAKE_BUILD_TYPE "Debug")
+SET(CMAKE_BUILD_TYPE "Release")
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb -Wno-int-in-bool-context")
 SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 
@@ -21,9 +21,9 @@ find_package(Eigen3 3.3.91 REQUIRED)
 include_directories(
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/test
     ${OpenCV_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
-    /usr/include/python3.6
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -53,10 +53,6 @@ target_link_libraries(
     ${EIGEN3_LIBS}
 
     ${PROJECT_NAME}
-
-    /usr/lib/x86_64-linux-gnu/libboost_python-py36.so
-    /usr/lib/x86_64-linux-gnu/libstdc++.so.6
-    /usr/lib/x86_64-linux-gnu/libpython3.6m.so
 )
 
 
@@ -73,12 +69,26 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
 #    ${EIGEN3_LIBS}
 #)
 
-#add_executable(
-#    test_Timer
-#    test/test_Timer.cpp
-#)
+add_executable(
+    test_Timer
+    test/test_Timer.cpp
+)
+target_link_libraries(
+    test_Timer
+    ${PROJECT_NAME}
+    ${OpenCV_LIBS}
+)
 
 #add_executable(
 #    test_Module
 #    test/test_Module.cpp 
+#)
+
+#add_executable(
+#    test_videoScreen
+#    test/test_videoScreen.cpp
+#)
+#target_link_libraries(
+#    test_videoScreen
+#    ${OpenCV_LIBS}
 #)

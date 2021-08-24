@@ -26,7 +26,7 @@ void LoopTimer::showTiming(std::chrono::time_point<std::chrono::high_resolution_
         runTime_ = duration_.count();
         unit = "s";
     }
-    std::cout << msg << " spend time: " << runTime_ << " " << unit << std::endl;
+    std::cout << msg << " spend time: " << runTime_ << " " << unit << "\n\n";
 }
 
 LoopTimer::LoopTimer(const std::string &msg) :  
@@ -35,12 +35,15 @@ LoopTimer::LoopTimer(const std::string &msg) :
                      endTime_{std::chrono::high_resolution_clock::now()}, 
                      isPause_{false}, 
                      runTime_{0},
-                     msg_{msg} {}
+                     msg_{msg},
+                     isShow_{false} {}
 
 LoopTimer::~LoopTimer() {
     //msg_ = "------------------------------------------\ntotal " + msg_;
-    endTime_ = std::chrono::high_resolution_clock::now();
-    showTiming(&startTime_, &endTime_, msg_);
+    if (isShow_) {
+        endTime_ = std::chrono::high_resolution_clock::now();
+        showTiming(&startTime_, &endTime_, msg_);
+    }
 }
 
 void LoopTimer::start() {
@@ -61,6 +64,8 @@ void LoopTimer::pause() {
 void LoopTimer::reset() {
     isPause_ = true;
     startTime_ = std::chrono::high_resolution_clock::now();
+    pauseTime_ = std::chrono::high_resolution_clock::now();
+    isShow_ = true;
 }
 std::chrono::time_point<std::chrono::high_resolution_clock>* LoopTimer::getStartTime() {
     return &startTime_;

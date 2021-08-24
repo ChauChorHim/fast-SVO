@@ -17,6 +17,7 @@ private:
     bool isPause_;
     double runTime_;
     std::string msg_;
+    bool isShow_;
 
 public:
     explicit LoopTimer(const std::string &msg);

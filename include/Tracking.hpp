@@ -88,7 +88,7 @@ private:
     void initTracker(const std::string &strSettingFile);
 
     // A handle function for multi thread in detect image features
-    void detectFeatures(cv::Ptr<cv::ORB> &ORBextractor, const cv::Mat &imRect, std::vector<cv::KeyPoint> &keypoints, cv::Mat &leftDescriptors);
+    void detectFeatures(cv::Ptr<cv::ORB> &ORBextractor, cv::Mat &imRect, std::vector<cv::KeyPoint> &keypoints, cv::Mat &descriptors);
 };
 }
 

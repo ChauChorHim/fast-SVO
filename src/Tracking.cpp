@@ -20,7 +20,7 @@ void Tracking::updateCurFeatures(bool isLeft, cv::Mat &imRect,
         ORBextractorRight_->detectAndCompute(imRect, cv::noArray(), keypoints, descriptors); 
 }
 
-void detectFeatures(cv::Ptr<cv::ORB> &ORBextractor, cv::Mat &imRect, std::vector<cv::KeyPoint> &keypoints, cv::Mat &descriptors) {
+void Tracking::detectFeatures(cv::Ptr<cv::ORB> &ORBextractor, cv::Mat &imRect, std::vector<cv::KeyPoint> &keypoints, cv::Mat &descriptors) {
     ORBextractor->detectAndCompute(imRect, cv::noArray(), keypoints, descriptors);
 }
 
@@ -217,25 +217,25 @@ void Tracking::initTracker(const std::string &strSettingFile) {
     if (fps == 0)
         fps = 30;
 
-    std::cout << std::endl << "Camera Parameters: " << std::endl;
-    std::cout << "- fx: " << fx << std::endl;
-    std::cout << "- fy: " << fy << std::endl;
-    std::cout << "- cx: " << cx << std::endl;
-    std::cout << "- cy: " << cy << std::endl;
-    std::cout << "- k1: " << distCoef_(0) << std::endl;
-    std::cout << "- k2: " << distCoef_(1) << std::endl;
-    if(distCoef_.rows()==5)
-        std::cout << "- k3: " << distCoef_(4) << std::endl;
-    std::cout << "- p1: " << distCoef_(2) << std::endl;
-    std::cout << "- p2: " << distCoef_(3) << std::endl;
-    std::cout << "- fps: " << fps << std::endl;
+    //std::cout << std::endl << "Camera Parameters: " << std::endl;
+    //std::cout << "- fx: " << fx << std::endl;
+    //std::cout << "- fy: " << fy << std::endl;
+    //std::cout << "- cx: " << cx << std::endl;
+    //std::cout << "- cy: " << cy << std::endl;
+    //std::cout << "- k1: " << distCoef_(0) << std::endl;
+    //std::cout << "- k2: " << distCoef_(1) << std::endl;
+    //if(distCoef_.rows()==5)
+    //    std::cout << "- k3: " << distCoef_(4) << std::endl;
+    //std::cout << "- p1: " << distCoef_(2) << std::endl;
+    //std::cout << "- p2: " << distCoef_(3) << std::endl;
+    //std::cout << "- fps: " << fps << std::endl;
 
     int rgbOrder = fSettings["Camera.RGB"];
     rgbOrder_ = rgbOrder;
-    if(rgbOrder_)
-        std::cout << "- color order: RGB (ignored if grayscale)" << std::endl;
-    else
-        std::cout << "- color order: BGR (ignored if grayscale)" << std::endl;
+    //if(rgbOrder_)
+    //    std::cout << "- color order: RGB (ignored if grayscale)" << std::endl;
+    //else
+    //    std::cout << "- color order: BGR (ignored if grayscale)" << std::endl;
 
     // Load ORB parameters
     const int nFeatures = fSettings["ORBextractor.nFeatures"];
@@ -244,10 +244,10 @@ void Tracking::initTracker(const std::string &strSettingFile) {
     ORBextractorLeft_ = cv::ORB::create(nFeatures,scaleFactor,nLevels);
     ORBextractorRight_ = cv::ORB::create(nFeatures,scaleFactor,nLevels);
 
-    std::cout << std::endl  << "ORB Extractor Parameters: " << std::endl;
-    std::cout << "- Number of Features: " << nFeatures << std::endl;
-    std::cout << "- Scale Levels: " << nLevels << std::endl;
-    std::cout << "- Scale Factor: " << scaleFactor << std::endl;
+    //std::cout << std::endl  << "ORB Extractor Parameters: " << std::endl;
+    //std::cout << "- Number of Features: " << nFeatures << std::endl;
+    //std::cout << "- Scale Levels: " << nLevels << std::endl;
+    //std::cout << "- Scale Factor: " << scaleFactor << std::endl;
 
     matcher_ = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE_HAMMING);
 
@@ -256,11 +256,11 @@ void Tracking::initTracker(const std::string &strSettingFile) {
     const float probability = fSettings["RANSAC.probability"];
     const size_t numIter = ceil(log(1. - confidence) / log(1. - pow(probability, 4)));
     const float epsilon = K_(0, 2) * 0.02;
-    std::cout << std::endl  << "RANSAC Parameters: " << std::endl;
-    std::cout << "- RANSAC confidence: " << confidence << std::endl;
-    std::cout << "- RANSAC probability: " << probability << std::endl;
-    std::cout << "- RANSAC Number of Iteration: " << numIter << std::endl;
-    std::cout << "- RANSAC epsilon: " << epsilon << std::endl;
+    //std::cout << std::endl  << "RANSAC Parameters: " << std::endl;
+    //std::cout << "- RANSAC confidence: " << confidence << std::endl;
+    //std::cout << "- RANSAC probability: " << probability << std::endl;
+    //std::cout << "- RANSAC Number of Iteration: " << numIter << std::endl;
+    //std::cout << "- RANSAC epsilon: " << epsilon << std::endl;
     p3pSolver_ = new Solver(numIter, epsilon, K_);
 }
 
