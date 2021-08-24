@@ -19,3 +19,11 @@ Usage example:
 ````
 
 ## Evaluation
+
+![](https://github.com/ChauChorHim/Books-Pictures/raw/main/pictures/20210824102148.png)
+![](https://github.com/ChauChorHim/Books-Pictures/raw/main/pictures/20210824102147.png)
+![](https://github.com/ChauChorHim/Books-Pictures/raw/main/pictures/20210824102143.png)
+![](https://github.com/ChauChorHim/Books-Pictures/raw/main/pictures/20210824102144.png)
+![](https://github.com/ChauChorHim/Books-Pictures/raw/main/pictures/20210824102145.png)
+![](https://github.com/ChauChorHim/Books-Pictures/raw/main/pictures/20210824102146.png)
+
