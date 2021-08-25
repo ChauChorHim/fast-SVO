@@ -19,6 +19,10 @@ Usage example:
 ````
 
 ## Evaluation
+Evaluation comparison between this project and my previous python version on KIITI dataset (grayscale 07)  
+
+![](https://github.com/ChauChorHim/Books-Pictures/raw/main/pictures/20210825075810.png)
+![](https://github.com/ChauChorHim/Books-Pictures/raw/main/pictures/20210825075809.png)
 
 ![](https://github.com/ChauChorHim/Books-Pictures/raw/main/pictures/20210824102148.png)
 ![](https://github.com/ChauChorHim/Books-Pictures/raw/main/pictures/20210824102147.png)
